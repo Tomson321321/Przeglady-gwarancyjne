@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Protokół z przeglądu gwarancyjnego</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
             --primary: #1a56db;
@@ -47,145 +50,158 @@
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* Miniatury zdjęć przed dodaniem usterki */
-        #preview-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; margin-top: 12px; }
-        .preview-thumb { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; aspect-ratio: 1 / 1; }
-        .preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .btn-remove-photo {
-            position: absolute; top: 4px; right: 4px; width: 28px; height: 28px;
-            background: rgba(220, 38, 38, 0.92); color: white; border: none; border-radius: 50%;
-            font-weight: bold; font-size: 15px; line-height: 28px; text-align: center; padding: 0; cursor: pointer;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        /* Siatka miniatur przed dodaniem usterki */
+        #preview-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .preview-thumb-box { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); aspect-ratio: 1 / 1; background: #eee; }
+        .preview-thumb-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .remove-photo-btn {
+            position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%;
+            background: rgba(220, 38, 38, 0.92); color: white; border: 2px solid white;
+            font-weight: bold; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
+        #logo-preview img { max-height: 60px; max-width: 220px; margin-top: 8px; border: 1px solid #e5e7eb; padding: 4px; border-radius: 6px; background: #fff; }
         .status-box { font-size: 0.85rem; color: #374151; margin-top: 6px; background: #f9fafb; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.4; }
         
         .issue-item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa; }
         .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .issue-photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 8px 0; }
-        .issue-img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; background: #eee; border: 1px solid #ddd; display: block; }
+        .issue-photos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 8px 0; }
+        .issue-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px; background: #eee; display: block; border: 1px solid #ddd; }
         .issue-meta { font-size: 0.82rem; color: #4b5563; }
 
-        /* Logo podgląd w formularzu */
-        #logo-preview-box { margin-top: 8px; display: flex; align-items: center; gap: 10px; }
-        #logo-preview-box img { max-height: 55px; max-width: 180px; border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px; background: #fff; }
-
-        /* Widok podglądu protokołu */
-        #print-wrapper { display: none; background: #525659; min-height: 100vh; padding: 10px; }
-        .print-toolbar {
-            position: sticky; top: 0; z-index: 100; background: #1f2937; color: white;
-            padding: 10px; border-radius: 10px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;
+        /* Widok podglądu protokołu przed wydrukiem / PDF / DOCX */
+        #preview-screen { display: none; background: #e5e7eb; min-height: 100vh; padding: 70px 10px 40px 10px; }
+        .preview-toolbar {
+            position: fixed; top: 0; left: 0; right: 0; background: #111827; color: white;
+            padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 6px; z-index: 9999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
-        .print-toolbar button {
-            padding: 10px 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; flex: 1; min-width: 130px;
+        .toolbar-btn {
+            padding: 9px 10px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer; flex: 1; text-align: center;
         }
-        .btn-tool-back { background: #4b5563; color: white; }
-        .btn-tool-pdf { background: #059669; color: white; }
-        .btn-tool-docx { background: #2563eb; color: white; }
-        .btn-tool-print { background: #f59e0b; color: #111827; }
+        .btn-back { background: #374151; color: white; flex: 0.7; }
+        .btn-pdf { background: #059669; color: white; }
+        .btn-docx { background: #2563eb; color: white; }
+        .btn-sysprint { background: #4b5563; color: white; flex: 0.8; }
 
-        #print-section {
-            background: white; color: #000; max-width: 210mm; margin: 0 auto; padding: 14mm;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-family: Arial, Helvetica, sans-serif;
+        /* Arkusz dokumentu A4 */
+        #document-sheet {
+            background: white; max-width: 800px; margin: 0 auto; padding: 28px 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12); color: #000;
         }
-
-        /* Nagłówek protokołu - logo po lewej */
-        .print-top-bar {
-            display: flex; align-items: center; gap: 16px; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 14px;
+        .doc-top-bar {
+            display: flex; align-items: center; gap: 15px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 14px;
         }
-        .print-logo-left img { max-height: 65px; max-width: 160px; object-fit: contain; display: block; }
-        .print-inst-name { font-size: 11pt; font-weight: bold; line-height: 1.3; color: #000; }
-        .print-doc-title { font-size: 15pt; font-weight: bold; text-align: center; margin: 12px 0 14px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* Prostokąt z danymi jedno pod drugim */
-        .print-meta-box {
-            border: 1.5px solid #000; padding: 10px 12px; margin-bottom: 10px; font-size: 10pt; line-height: 1.6;
+        .doc-logo-box img { max-height: 65px; max-width: 190px; object-fit: contain; display: block; }
+        .doc-org-name { font-size: 11pt; font-weight: bold; line-height: 1.3; color: #000; }
+        .doc-title { font-size: 15pt; font-weight: bold; text-align: center; margin: 14px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* Prostokąt z danymi zadania */
+        .doc-meta-box {
+            border: 1.5px solid #000; padding: 10px 12px; margin-bottom: 10px; font-size: 10pt; line-height: 1.55;
         }
-        .print-meta-row { margin-bottom: 4px; }
-        .print-meta-row:last-child { margin-bottom: 0; }
-
-        /* Kontrolujący pod prostokątem */
-        .print-inspector-line {
+        .doc-inspector-row {
             font-size: 10pt; margin-bottom: 16px; padding: 4px 2px;
         }
 
         /* Tabela usterek */
-        .print-table {
-            width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 20px;
-        }
-        .print-table th, .print-table td {
-            border: 1px solid #000; padding: 7px 8px; vertical-align: top; text-align: left;
-        }
-        .print-table th {
-            background-color: #f0f0f0; font-weight: bold; text-align: center;
-        }
-        .col-nr { width: 8%; text-align: center !important; font-weight: bold; }
-        .col-desc { width: 34%; }
-        .col-photos { width: 36%; }
+        table.doc-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 9.5pt; }
+        table.doc-table th, table.doc-table td { border: 1px solid #000; padding: 7px; vertical-align: top; text-align: left; }
+        table.doc-table th { background-color: #f3f4f6; font-weight: bold; text-align: center; }
+        .col-nr { width: 7%; text-align: center !important; font-weight: bold; }
+        .col-desc { width: 31%; }
+        .col-photos { width: 40%; }
         .col-loc { width: 22%; font-size: 8.5pt; }
+        
+        .doc-photos-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+        .doc-photos-wrap img { max-width: 100%; max-height: 145px; object-fit: contain; border: 1px solid #ccc; }
 
-        .table-photos-wrap {
-            display: flex; flex-wrap: wrap; gap: 6px;
+        /* Sekcja pod tabelą: Kod QR po lewej, Podpis komisji po prawej */
+        .doc-bottom-section {
+            display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
+            margin-top: 24px; page-break-inside: avoid;
         }
-        .table-photos-wrap img {
-            max-width: 100%; max-height: 135px; object-fit: contain; border: 1px solid #ccc; display: block;
+        .qr-box {
+            display: flex; align-items: center; gap: 10px; border: 1px solid #999; padding: 8px 10px;
+            border-radius: 6px; max-width: 55%; background: #fafafa;
+        }
+        #qrcode-container img, #qrcode-container canvas { display: block; width: 88px !important; height: 88px !important; }
+        .qr-caption { font-size: 8pt; line-height: 1.35; color: #111; }
+        .doc-sig-box {
+            width: 38%; border-top: 1px solid #000; text-align: center; padding-top: 6px; font-size: 9.5pt; margin-bottom: 6px;
         }
 
-        /* Podpis tylko przedstawiciela komisji */
-        .signatures { display: flex; justify-content: flex-end; margin-top: 40px; page-break-inside: avoid; }
-        .sig-box { width: 45%; border-top: 1px solid #000; text-align: center; padding-top: 6px; font-size: 9.5pt; }
+        .doc-footer {
+            border-top: 1px solid #666; margin-top: 26px; padding-top: 8px;
+            font-size: 8pt; color: #333; text-align: center; line-height: 1.35;
+        }
 
-        /* Stopka na dole protokołu */
-        .print-footer {
-            margin-top: 30px; padding-top: 8px; border-top: 1px solid #666;
-            font-size: 8pt; color: #333; text-align: center; white-space: pre-line;
+        /* Widok interaktywnej mapy po zeskanowaniu QR */
+        #map-view { display: none; position: fixed; inset: 0; background: #fff; z-index: 20000; flex-direction: column; }
+        .map-header {
+            background: #1a56db; color: white; padding: 12px 15px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .map-header h3 { margin: 0; font-size: 1rem; }
+        .map-btn-small {
+            background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5);
+            padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        }
+        #leaflet-map { flex: 1; width: 100%; }
+        .custom-pin {
+            background: #dc2626; color: white; border: 2px solid white; border-radius: 50%;
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        .popup-nav-btn {
+            display: inline-block; margin-top: 8px; padding: 8px 12px; background: #1a56db;
+            color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 12px;
         }
 
         @media print {
             body { background: white !important; padding: 0 !important; margin: 0 !important; }
-            .no-print, .print-toolbar { display: none !important; }
-            #print-wrapper { display: block !important; background: white !important; padding: 0 !important; }
-            #print-section { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
-            .print-table tr { page-break-inside: avoid; }
+            #form-screen, .preview-toolbar, #map-view { display: none !important; }
+            #preview-screen { display: block !important; padding: 0 !important; background: white !important; }
+            #document-sheet { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; }
         }
     </style>
 </head>
 <body>
 
-<div class="no-print" id="editor-wrapper">
+<!-- EKRAN 1: FORMULARZ -->
+<div id="form-screen">
     <h1>📋 Protokół z przeglądu gwarancyjnego</h1>
 
     <!-- DANE OGÓLNE -->
     <div class="card">
-        <h2>1. Dane ogólne zadania i nagłówek</h2>
-        
-        <label class="field-label">Logo instytucji / firmy (lewy górny róg):</label>
-        <input type="file" id="logoInput" class="file-input-hidden" accept="image/*">
-        <label for="logoInput" class="btn btn-outline">🏢 Wybierz logo z galerii</label>
-        <div id="logo-preview-box"></div>
-
+        <h2>1. Dane ogólne i nagłówek</h2>
         <label class="field-label" for="taskName">Nazwa zadania / obiektu:</label>
         <input type="text" id="taskName" placeholder="np. Przebudowa drogi krajowej nr 8...">
 
         <label class="field-label" for="contractNo">Numer umowy:</label>
-        <input type="text" id="contractNo" placeholder="np. O/BI.D-3.2410.12.2026">
+        <input type="text" id="contractNo" placeholder="np. O.BI.D-3.2410.12.2026">
 
         <label class="field-label" for="inspectDate">Data kontroli:</label>
         <input type="date" id="inspectDate">
 
-        <label class="field-label" for="inspector">Kontrolujący / Przedstawiciele komisji:</label>
+        <label class="field-label" for="inspector">Kontrolujący:</label>
         <input type="text" id="inspector" placeholder="Imię i nazwisko / stanowisko">
 
+        <label class="field-label">Logo instytucji (lewy górny róg):</label>
+        <input type="file" id="logoInput" class="file-input-hidden" accept="image/*">
+        <label for="logoInput" class="btn btn-outline">🏢 Wybierz logo z galerii (zapamiętywane na stałe)</label>
+        <div id="logo-preview"></div>
+
         <label class="field-label" for="footerText">Stopka na dole protokołu:</label>
-        <textarea id="footerText" style="min-height: 60px; font-size: 0.85rem;">Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku
-ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialystok@gddkia.gov.pl</textarea>
+        <textarea id="footerText" style="min-height: 60px; font-size: 0.85rem;">Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku | ul. Zwycięstwa 2, 15-703 Białystok | tel. +48 85 664 58 50 | sekretariat_bialystok@gddkia.gov.pl</textarea>
     </div>
 
     <!-- DODAWANIE USTERKI -->
     <div class="card">
         <h2>2. Dodaj nową usterkę</h2>
         
-        <label class="field-label">Zdjęcia usterki (możesz dodać kilka):</label>
+        <label class="field-label">Zdjęcia usterki (możesz dodać wiele zdjęć):</label>
         <input type="file" id="cameraInput" class="file-input-hidden" accept="image/*" capture="environment">
         <input type="file" id="galleryInput" class="file-input-hidden" accept="image/*" multiple>
         
@@ -193,6 +209,7 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
             <label for="cameraInput" class="btn btn-outline">📷 Zrób zdjęcie</label>
             <label for="galleryInput" class="btn btn-outline">🖼️ Z galerii</label>
         </div>
+        <div id="photo-loading-msg" style="font-size:0.85rem; color:#1a56db; margin-top:6px;"></div>
         <div id="preview-container"></div>
 
         <label class="field-label">Lokalizacja GPS:</label>
@@ -205,7 +222,7 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
             <button type="button" class="btn btn-mic" id="micBtn" title="Dyktuj głosowo">🎤</button>
         </div>
         <div id="micStatus" style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">
-            Kliknij 🎤 aby dyktować lub użyj mikrofonu na klawiaturze telefonu.
+            Na iPhone kliknij w pole opisu i użyj mikrofonu na klawiaturze.
         </div>
 
         <button type="button" class="btn btn-primary" id="btnAddIssue">➕ Dodaj usterkę do protokołu</button>
@@ -224,42 +241,41 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
     <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" id="btnClear">🗑️ Wyczyść usterki i dane zadania</button>
 </div>
 
-<!-- EKRAN PODGLĄDU I EKSPORTU PROTOKOŁU -->
-<div id="print-wrapper">
-    <div class="print-toolbar no-print">
-        <button type="button" class="btn-tool-back" id="btnBackToEdit">⬅️ Wróć do edycji</button>
-        <button type="button" class="btn-tool-pdf" id="btnDownloadPdf">⬇️ Pobierz PDF</button>
-        <button type="button" class="btn-tool-docx" id="btnDownloadDocx">📝 Pobierz DOCX</button>
-        <button type="button" class="btn-tool-print" id="btnSystemPrint">🖨️ Drukuj</button>
+<!-- EKRAN 2: GOTOWY PROTOKÓŁ (PODGLĄD + PDF + DOCX + DRUK) -->
+<div id="preview-screen">
+    <div class="preview-toolbar">
+        <button type="button" class="toolbar-btn btn-back" id="btnBackToEdit">⬅️ Wróć</button>
+        <button type="button" class="toolbar-btn btn-pdf" id="btnDownloadPdf">⬇️ PDF</button>
+        <button type="button" class="toolbar-btn btn-docx" id="btnDownloadDocx">📝 DOCX</button>
+        <button type="button" class="toolbar-btn btn-sysprint" id="btnSystemPrint">🖨️ Drukuj</button>
     </div>
 
-    <div id="print-section">
-        <!-- NAGŁÓWEK Z LOGO PO LEWEJ -->
-        <div class="print-top-bar">
-            <div class="print-logo-left" id="p-logoContainer"></div>
-            <div class="print-inst-name">
+    <div id="document-sheet">
+        <div class="doc-top-bar">
+            <div class="doc-logo-box" id="doc-logo-container"></div>
+            <div class="doc-org-name">
                 Generalna Dyrekcja<br>
                 Dróg Krajowych i Autostrad<br>
                 Oddział w Białymstoku
             </div>
         </div>
 
-        <div class="print-doc-title">Protokół z przeglądu gwarancyjnego</div>
+        <div class="doc-title">Protokół z przeglądu gwarancyjnego</div>
 
-        <!-- PROSTOKĄT Z DANYMI JEDNO POD DRUGIM -->
-        <div class="print-meta-box">
-            <div class="print-meta-row"><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
-            <div class="print-meta-row"><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
-            <div class="print-meta-row"><strong>Data kontroli:</strong> <span id="p-inspectDate"></span></div>
+        <!-- Prostokąt z danymi zadania -->
+        <div class="doc-meta-box">
+            <div><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
+            <div><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
+            <div><strong>Data kontroli:</strong> <span id="p-inspectDate"></span></div>
         </div>
 
-        <!-- KONTROLUJĄCY POD PROSTOKĄTEM -->
-        <div class="print-inspector-line">
+        <!-- Kontrolujący pod prostokątem -->
+        <div class="doc-inspector-row">
             <strong>Kontrolujący:</strong> <span id="p-inspector"></span>
         </div>
 
-        <!-- TABELA USTEREK: NR / OPIS / ZDJĘCIA / LOKALIZACJA -->
-        <table class="print-table">
+        <!-- Tabela usterek -->
+        <table class="doc-table">
             <thead>
                 <tr>
                     <th class="col-nr">Nr usterki</th>
@@ -271,23 +287,54 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
             <tbody id="p-issuesTableBody"></tbody>
         </table>
 
-        <!-- PODPIS PRZEDSTAWICIELA KOMISJI -->
-        <div class="signatures">
-            <div class="sig-box">Podpis przedstawiciela komisji</div>
+        <!-- Sekcja pod tabelą: Kod QR po lewej + Podpis komisji po prawej -->
+        <div class="doc-bottom-section">
+            <div class="qr-box" id="qr-wrapper" style="display:none;">
+                <div id="qrcode-container"></div>
+                <div class="qr-caption">
+                    <strong>Mapa usterek (GPS)</strong><br>
+                    Zeskanuj kod QR aparatem telefonu, aby otworzyć mapę ze wszystkimi usterkami (1–<span id="qr-max-nr"></span>) i nawigacją Google Maps.
+                </div>
+            </div>
+            <div class="doc-sig-box">Podpis przedstawiciela komisji</div>
         </div>
 
-        <!-- STOPKA NA DOLE -->
-        <div class="print-footer" id="p-footerText"></div>
+        <div class="doc-footer" id="p-footer"></div>
     </div>
+</div>
+
+<!-- EKRAN 3: INTERAKTYWNA MAPA PO ZESKANOWANIU KODU QR -->
+<div id="map-view">
+    <div class="map-header">
+        <h3>📍 Mapa usterek z protokołu</h3>
+        <div>
+            <button type="button" class="map-btn-small" id="btnFitMap">🎯 Pokaż wszystkie</button>
+            <button type="button" class="map-btn-small" id="btnOpenAppFromMap" style="margin-left:5px;">📋 Aplikacja</button>
+        </div>
+    </div>
+    <div id="leaflet-map"></div>
 </div>
 
 <script>
     var issues = [];
     var currentPhotos = [];
-    var savedLogoBase64 = "";
+    var logoBase64 = "";
     var currentLocationText = "Nie pobrano lokalizacji";
+    var currentLat = null;
+    var currentLon = null;
+    var currentQrDataUrl = "";
+    var leafletMapInstance = null;
+    var mapBounds = null;
 
     document.addEventListener("DOMContentLoaded", function() {
+        // Sprawdź czy otwarto link z kodu QR (?map=...)
+        var urlParams = new URLSearchParams(window.location.search);
+        var mapDataParam = urlParams.get("map");
+        if (mapDataParam) {
+            openInteractiveMap(mapDataParam);
+            return;
+        }
+
         var dateInput = document.getElementById("inspectDate");
         if (dateInput) {
             dateInput.valueAsDate = new Date();
@@ -301,23 +348,102 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
         document.getElementById("micBtn").addEventListener("click", toggleDictation);
         document.getElementById("btnAddIssue").addEventListener("click", addIssue);
         document.getElementById("btnGenerate").addEventListener("click", openProtocolPreview);
-        document.getElementById("btnBackToEdit").addEventListener("click", closeProtocolPreview);
-        document.getElementById("btnDownloadPdf").addEventListener("click", downloadPdfFile);
-        document.getElementById("btnDownloadDocx").addEventListener("click", downloadDocxFile);
-        document.getElementById("btnSystemPrint").addEventListener("click", function() { window.print(); });
         document.getElementById("btnClear").addEventListener("click", clearAll);
 
-        document.getElementById("footerText").addEventListener("input", saveLogoAndFooter);
+        document.getElementById("btnBackToEdit").addEventListener("click", function() {
+            document.getElementById("preview-screen").style.display = "none";
+            document.getElementById("form-screen").style.display = "block";
+            window.scrollTo(0, 0);
+        });
+        document.getElementById("btnSystemPrint").addEventListener("click", function() {
+            window.print();
+        });
+        document.getElementById("btnDownloadPdf").addEventListener("click", downloadRealPdf);
+        document.getElementById("btnDownloadDocx").addEventListener("click", downloadDocxFile);
     });
 
-    // Obsługa logo instytucji
+    // Obsługa interaktywnej mapy po zeskanowaniu QR
+    function openInteractiveMap(encodedData) {
+        document.getElementById("form-screen").style.display = "none";
+        document.getElementById("preview-screen").style.display = "none";
+        var mapView = document.getElementById("map-view");
+        mapView.style.display = "flex";
+
+        var points = [];
+        try {
+            var parts = encodedData.split(";");
+            for (var i = 0; i < parts.length; i++) {
+                var seg = parts[i].split("|");
+                if (seg.length >= 3) {
+                    var nr = seg[0];
+                    var lat = parseFloat(seg[1]);
+                    var lon = parseFloat(seg[2]);
+                    var desc = seg[3] ? decodeURIComponent(seg[3]) : "Usterka nr " + nr;
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        points.push({ nr: nr, lat: lat, lon: lon, desc: desc });
+                    }
+                }
+            }
+        } catch (e) {
+            alert("Nie udało się odczytać punktów z kodu QR.");
+        }
+
+        var defaultLat = points.length > 0 ? points[0].lat : 53.1325;
+        var defaultLon = points.length > 0 ? points[0].lon : 23.1688;
+
+        leafletMapInstance = L.map("leaflet-map").setView([defaultLat, defaultLon], 15);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap"
+        }).addTo(leafletMapInstance);
+
+        var boundsArr = [];
+        for (var j = 0; j < points.length; j++) {
+            var pt = points[j];
+            boundsArr.push([pt.lat, pt.lon]);
+
+            var customIcon = L.divIcon({
+                className: "",
+                html: "<div class='custom-pin'>" + pt.nr + "</div>",
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            var gmapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" + pt.lat + "," + pt.lon;
+            var popupHtml = "<div style='font-size:13px; max-width:220px;'>" +
+                "<strong>Usterka nr " + pt.nr + "</strong><br>" +
+                "<span style='color:#374151;'>" + pt.desc + "</span><br>" +
+                "<a href='" + gmapsUrl + "' target='_blank' class='popup-nav-btn'>🧭 Nawiguj w Google Maps</a>" +
+                "</div>";
+
+            L.marker([pt.lat, pt.lon], { icon: customIcon }).addTo(leafletMapInstance).bindPopup(popupHtml);
+        }
+
+        if (boundsArr.length > 1) {
+            mapBounds = L.latLngBounds(boundsArr);
+            leafletMapInstance.fitBounds(mapBounds, { padding: [40, 40] });
+        } else if (boundsArr.length === 1) {
+            mapBounds = L.latLngBounds(boundsArr);
+            leafletMapInstance.setView(boundsArr[0], 17);
+        }
+
+        document.getElementById("btnFitMap").addEventListener("click", function() {
+            if (mapBounds && leafletMapInstance) {
+                leafletMapInstance.fitBounds(mapBounds, { padding: [40, 40] });
+            }
+        });
+
+        document.getElementById("btnOpenAppFromMap").addEventListener("click", function() {
+            window.location.href = window.location.origin + window.location.pathname;
+        });
+    }
+
+    // Logo
     function handleLogoUpload(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
-        var file = files[0];
-        var objectUrl = URL.createObjectURL(file);
+        var objectUrl = URL.createObjectURL(files[0]);
         var img = new Image();
-
         img.onload = function() {
             var canvas = document.createElement("canvas");
             var MAX_W = 400;
@@ -329,76 +455,87 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
             }
             canvas.width = w;
             canvas.height = h;
-            var ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, w, h);
-            savedLogoBase64 = canvas.toDataURL("image/png");
+            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+            logoBase64 = canvas.toDataURL("image/png");
             renderLogoPreview();
-            saveLogoAndFooter();
+            saveToStorage();
             URL.revokeObjectURL(objectUrl);
         };
         img.src = objectUrl;
     }
 
     function renderLogoPreview() {
-        var box = document.getElementById("logo-preview-box");
-        if (savedLogoBase64) {
-            box.innerHTML = "<img src='" + savedLogoBase64 + "' alt='Logo'><button type='button' class='btn btn-danger' onclick='removeLogo()'>Usuń logo</button>";
+        var box = document.getElementById("logo-preview");
+        if (logoBase64) {
+            box.innerHTML = "<img src='" + logoBase64 + "' alt='Logo firmy'>";
         } else {
             box.innerHTML = "";
         }
     }
 
-    function removeLogo() {
-        savedLogoBase64 = "";
-        renderLogoPreview();
-        saveLogoAndFooter();
-    }
-
-    // Obsługa wielu zdjęć do jednej usterki
+    // Wiele zdjęć do usterki
     function handleImageUpload(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
 
+        var loadingEl = document.getElementById("photo-loading-msg");
+        loadingEl.innerText = "⏳ Przetwarzanie zdjęć (" + files.length + ")...";
+
         getLocation();
 
-        for (var f = 0; f < files.length; f++) {
-            processSinglePhoto(files[f]);
+        var processedCount = 0;
+        var totalFiles = files.length;
+
+        for (var f = 0; f < totalFiles; f++) {
+            (function(file) {
+                var objectUrl = URL.createObjectURL(file);
+                var img = new Image();
+
+                img.onload = function() {
+                    var canvas = document.createElement("canvas");
+                    var MAX_WIDTH = 800;
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    var ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+                    var dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+                    currentPhotos.push(dataUrl);
+
+                    URL.revokeObjectURL(objectUrl);
+                    processedCount++;
+                    if (processedCount >= totalFiles) {
+                        loadingEl.innerText = "";
+                    }
+                    renderCurrentPhotos();
+                };
+
+                img.onerror = function() {
+                    URL.revokeObjectURL(objectUrl);
+                    processedCount++;
+                    if (processedCount >= totalFiles) {
+                        loadingEl.innerText = "";
+                    }
+                };
+
+                img.src = objectUrl;
+            })(files[f]);
         }
+
         event.target.value = "";
     }
 
-    function processSinglePhoto(file) {
-        var objectUrl = URL.createObjectURL(file);
-        var img = new Image();
-
-        img.onload = function() {
-            var canvas = document.createElement("canvas");
-            var MAX_WIDTH = 800;
-            var width = img.width;
-            var height = img.height;
-
-            if (width > MAX_WIDTH) {
-                height = Math.round((height * MAX_WIDTH) / width);
-                width = MAX_WIDTH;
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-
-            var ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, width, height);
-            var base64Data = canvas.toDataURL("image/jpeg", 0.72);
-
-            currentPhotos.push(base64Data);
-            renderCurrentPhotos();
-            URL.revokeObjectURL(objectUrl);
-        };
-
-        img.onerror = function() {
-            URL.revokeObjectURL(objectUrl);
-        };
-
-        img.src = objectUrl;
+    function removeCurrentPhoto(idx) {
+        currentPhotos.splice(idx, 1);
+        renderCurrentPhotos();
     }
 
     function renderCurrentPhotos() {
@@ -409,37 +546,32 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
         }
         var html = "";
         for (var i = 0; i < currentPhotos.length; i++) {
-            html += "<div class='preview-thumb'>";
+            html += "<div class='preview-thumb-box'>";
             html += "<img src='" + currentPhotos[i] + "' alt='Zdjęcie " + (i + 1) + "'>";
-            html += "<button type='button' class='btn-remove-photo' onclick='removeCurrentPhoto(" + i + ")' title='Usuń zdjęcie'>✕</button>";
+            html += "<button type='button' class='remove-photo-btn' onclick='removeCurrentPhoto(" + i + ")' title='Usuń zdjęcie'>✕</button>";
             html += "</div>";
         }
         container.innerHTML = html;
     }
 
-    function removeCurrentPhoto(index) {
-        currentPhotos.splice(index, 1);
-        renderCurrentPhotos();
-    }
-
-    // Pobieranie GPS i zamiana na adres
+    // GPS
     function getLocation() {
         var statusEl = document.getElementById("gpsStatus");
         if (!navigator.geolocation) {
-            statusEl.innerText = "⚠️ Twoja przeglądarka nie obsługuje GPS.";
+            statusEl.innerText = "⚠️ Przeglądarka nie obsługuje GPS.";
             return;
         }
         statusEl.innerHTML = "⏳ <strong>Szukam sygnału GPS...</strong>";
 
         navigator.geolocation.getCurrentPosition(
             function(position) {
-                var lat = position.coords.latitude.toFixed(6);
-                var lon = position.coords.longitude.toFixed(6);
-                var coords = lat + ", " + lon;
-                currentLocationText = "GPS: " + coords;
-                statusEl.innerHTML = "📍 Współrzędne: <strong>" + coords + "</strong> (pobieram adres...)";
+                currentLat = parseFloat(position.coords.latitude.toFixed(6));
+                currentLon = parseFloat(position.coords.longitude.toFixed(6));
+                var coordsStr = currentLat + ", " + currentLon;
+                currentLocationText = "GPS: " + coordsStr;
+                statusEl.innerHTML = "📍 Współrzędne: <strong>" + coordsStr + "</strong> (pobieram adres...)";
 
-                fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&addressdetails=1")
+                fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon + "&zoom=18&addressdetails=1")
                     .then(function(res) { return res.json(); })
                     .then(function(data) {
                         if (data && data.address) {
@@ -449,30 +581,25 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
                             var city = addr.city || addr.town || addr.village || "";
                             var shortAddr = [road + house, city].filter(Boolean).join(", ");
                             if (shortAddr) {
-                                currentLocationText = shortAddr + " (GPS: " + coords + ")";
+                                currentLocationText = shortAddr + " (GPS: " + coordsStr + ")";
                             }
                         }
                         statusEl.innerHTML = "✅ Lokalizacja: <strong>" + currentLocationText + "</strong>";
                     })
                     .catch(function() {
-                        statusEl.innerHTML = "📍 Zapisano współrzędne: <strong>" + coords + "</strong>";
+                        statusEl.innerHTML = "📍 Zapisano współrzędne: <strong>" + coordsStr + "</strong>";
                     });
             },
             function(err) {
-                var msg = "⚠️ Błąd GPS: ";
-                if (err.code === 1) msg += "Odmówiono dostępu do lokalizacji.";
-                else if (err.code === 2) msg += "Brak sygnału GPS.";
-                else msg += "Przekroczono czas oczekiwania.";
-                statusEl.innerText = msg;
+                statusEl.innerText = "⚠️ Błąd GPS (" + err.code + "). Sprawdź uprawnienia lokalizacji w Safari.";
             },
             { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
     }
 
-    // Dyktowanie głosowe
+    // Dyktowanie
     var recognition = null;
     var isRecording = false;
-
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
         var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
@@ -483,43 +610,36 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
         recognition.onstart = function() {
             isRecording = true;
             document.getElementById("micBtn").classList.add("recording");
-            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz do telefonu!</strong>";
+            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz!</strong>";
         };
-
         recognition.onresult = function(event) {
             var transcript = event.results[0][0].transcript;
             var descEl = document.getElementById("issueDesc");
             descEl.value += (descEl.value ? " " : "") + transcript;
         };
-
-        recognition.onerror = function() {
-            document.getElementById("micStatus").innerText = "⚠️ Użyj ikony mikrofonu bezpośrednio na klawiaturze telefonu.";
-        };
-
         recognition.onend = function() {
             isRecording = false;
             document.getElementById("micBtn").classList.remove("recording");
-            document.getElementById("micStatus").innerText = "Kliknij 🎤 aby dyktować dalej lub użyj mikrofonu na klawiaturze.";
+            document.getElementById("micStatus").innerText = "Na iPhone kliknij w pole opisu i użyj mikrofonu na klawiaturze.";
         };
     }
 
     function toggleDictation() {
         if (!recognition) {
-            alert("Kliknij w pole opisu usterki i naciśnij ikonę mikrofonu na klawiaturze swojego telefonu!");
+            alert("Na iPhone kliknij w pole opisu usterki i użyj ikony mikrofonu w prawym dolnym rogu klawiatury.");
             return;
         }
-        if (isRecording) {
-            recognition.stop();
-        } else {
+        if (isRecording) recognition.stop();
+        else {
             try { recognition.start(); } catch (e) {}
         }
     }
 
-    // Dodawanie usterki do listy
+    // Dodawanie usterki
     function addIssue() {
         var desc = document.getElementById("issueDesc").value.trim();
         if (!desc && currentPhotos.length === 0) {
-            alert("Zrób zdjęcie lub wpisz opis usterki przed kliknięciem Dodaj!");
+            alert("Zrób przynajmniej jedno zdjęcie lub wpisz opis usterki!");
             return;
         }
 
@@ -531,6 +651,8 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
             time: timeStr,
             photos: currentPhotos.slice(),
             location: currentLocationText,
+            lat: currentLat,
+            lon: currentLon,
             description: desc || "(Brak opisu tekstowego)"
         });
 
@@ -580,136 +702,183 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
         listEl.innerHTML = html;
     }
 
-    // Otwieranie podglądu protokołu
+    // Budowanie linku i kodu QR do mapy usterek
+    function buildMapQrCode() {
+        var qrWrapper = document.getElementById("qr-wrapper");
+        var qrContainer = document.getElementById("qrcode-container");
+        qrContainer.innerHTML = "";
+        currentQrDataUrl = "";
+
+        var gpsSegments = [];
+        for (var i = 0; i < issues.length; i++) {
+            var it = issues[i];
+            var latVal = it.lat;
+            var lonVal = it.lon;
+
+            // Wyciągnij współrzędne z tekstu lokalizacji, jeśli brak osobnych pól lat/lon
+            if ((latVal === null || latVal === undefined) && it.location) {
+                var match = it.location.match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+                if (match) {
+                    latVal = parseFloat(match[1]);
+                    lonVal = parseFloat(match[2]);
+                }
+            }
+
+            if (latVal !== null && lonVal !== null && !isNaN(latVal) && !isNaN(lonVal)) {
+                var shortDesc = (it.description || "").replace(/[|;]/g, " ").substring(0, 45);
+                gpsSegments.push((i + 1) + "|" + latVal.toFixed(5) + "|" + lonVal.toFixed(5) + "|" + encodeURIComponent(shortDesc));
+            }
+        }
+
+        if (gpsSegments.length === 0) {
+            qrWrapper.style.display = "none";
+            return;
+        }
+
+        qrWrapper.style.display = "flex";
+        document.getElementById("qr-max-nr").innerText = issues.length;
+
+        var baseUrl = window.location.origin + window.location.pathname;
+        var mapUrl = baseUrl + "?map=" + gpsSegments.join(";");
+
+        if (typeof QRCode !== "undefined") {
+            new QRCode(qrContainer, {
+                text: mapUrl,
+                width: 120,
+                height: 120,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.L
+            });
+
+            setTimeout(function() {
+                var canvasEl = qrContainer.querySelector("canvas");
+                var imgEl = qrContainer.querySelector("img");
+                if (canvasEl) {
+                    currentQrDataUrl = canvasEl.toDataURL("image/png");
+                } else if (imgEl && imgEl.src) {
+                    currentQrDataUrl = imgEl.src;
+                }
+            }, 150);
+        }
+    }
+
+    // Otwarcie podglądu protokołu
     function openProtocolPreview() {
         if (issues.length === 0) {
             alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu.");
             return;
         }
 
-        var logoCont = document.getElementById("p-logoContainer");
-        if (savedLogoBase64) {
-            logoCont.innerHTML = "<img src='" + savedLogoBase64 + "' alt='Logo'>";
-            logoCont.style.display = "block";
-        } else {
-            logoCont.innerHTML = "";
-            logoCont.style.display = "none";
-        }
+        var logoBox = document.getElementById("doc-logo-container");
+        logoBox.innerHTML = logoBase64 ? "<img src='" + logoBase64 + "'>" : "";
 
         document.getElementById("p-taskName").innerText = document.getElementById("taskName").value || "—";
         document.getElementById("p-contractNo").innerText = document.getElementById("contractNo").value || "—";
         document.getElementById("p-inspectDate").innerText = document.getElementById("inspectDate").value || "—";
         document.getElementById("p-inspector").innerText = document.getElementById("inspector").value || "—";
-        document.getElementById("p-footerText").innerText = document.getElementById("footerText").value || "";
+        document.getElementById("p-footer").innerText = document.getElementById("footerText").value || "";
 
-        var tbody = document.getElementById("p-issuesTableBody");
-        var rowsHtml = "";
+        var tbodyHtml = "";
         for (var i = 0; i < issues.length; i++) {
             var item = issues[i];
             var photosArr = item.photos || (item.photo ? [item.photo] : []);
-            rowsHtml += "<tr>";
-            rowsHtml += "<td class='col-nr'>" + (i + 1) + "</td>";
-            rowsHtml += "<td class='col-desc'>" + escapeHtml(item.description) + "</td>";
-            rowsHtml += "<td class='col-photos'><div class='table-photos-wrap'>";
+            tbodyHtml += "<tr>";
+            tbodyHtml += "<td class='col-nr'>" + (i + 1) + "</td>";
+            tbodyHtml += "<td class='col-desc'>" + item.description + "</td>";
+            tbodyHtml += "<td class='col-photos'>";
             if (photosArr.length > 0) {
+                tbodyHtml += "<div class='doc-photos-wrap'>";
                 for (var p = 0; p < photosArr.length; p++) {
-                    rowsHtml += "<img src='" + photosArr[p] + "'>";
+                    tbodyHtml += "<img src='" + photosArr[p] + "'>";
                 }
+                tbodyHtml += "</div>";
             } else {
-                rowsHtml += "—";
+                tbodyHtml += "—";
             }
-            rowsHtml += "</div></td>";
-            rowsHtml += "<td class='col-loc'>" + escapeHtml(item.location) + "<br><small>Godz. " + item.time + "</small></td>";
-            rowsHtml += "</tr>";
+            tbodyHtml += "</td>";
+            tbodyHtml += "<td class='col-loc'>" + item.location + "<br><span style='color:#555;'>(Godz. " + item.time + ")</span></td>";
+            tbodyHtml += "</tr>";
         }
-        tbody.innerHTML = rowsHtml;
+        document.getElementById("p-issuesTableBody").innerHTML = tbodyHtml;
 
+        buildMapQrCode();
         saveToStorage();
-        document.getElementById("editor-wrapper").style.display = "none";
-        document.getElementById("print-wrapper").style.display = "block";
+
+        document.getElementById("form-screen").style.display = "none";
+        document.getElementById("preview-screen").style.display = "block";
         window.scrollTo(0, 0);
     }
 
-    function closeProtocolPreview() {
-        document.getElementById("print-wrapper").style.display = "none";
-        document.getElementById("editor-wrapper").style.display = "block";
-        window.scrollTo(0, 0);
-    }
+    // Generowanie i pobieranie prawdziwego pliku PDF
+    function downloadRealPdf() {
+        var btn = document.getElementById("btnDownloadPdf");
+        var origText = btn.innerText;
+        btn.innerText = "⏳ Tworzę PDF...";
+        btn.disabled = true;
 
-    function escapeHtml(text) {
-        if (!text) return "";
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    // Generowanie pliku PDF
-    function downloadPdfFile() {
-        var element = document.getElementById("print-section");
+        var element = document.getElementById("document-sheet");
         var dateVal = document.getElementById("inspectDate").value || "protokol";
         var filename = "Protokol_przeglad_gwarancyjny_" + dateVal + ".pdf";
 
         if (typeof html2pdf !== "undefined") {
             var opt = {
-                margin: 10,
+                margin: [10, 10, 10, 10],
                 filename: filename,
                 image: { type: "jpeg", quality: 0.85 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
             };
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(element).save().then(function() {
+                btn.innerText = origText;
+                btn.disabled = false;
+            }).catch(function() {
+                btn.innerText = origText;
+                btn.disabled = false;
+                window.print();
+            });
         } else {
+            btn.innerText = origText;
+            btn.disabled = false;
             window.print();
         }
     }
 
-    // Generowanie pliku DOC / DOCX (otwieralnego bezpośrednio w Microsoft Word)
+    // Generowanie i pobieranie pliku DOCX (Word z osadzonymi zdjęciami i kodem QR)
     function downloadDocxFile() {
-        var taskName = escapeHtml(document.getElementById("taskName").value || "—");
-        var contractNo = escapeHtml(document.getElementById("contractNo").value || "—");
-        var inspectDate = escapeHtml(document.getElementById("inspectDate").value || "—");
-        var inspector = escapeHtml(document.getElementById("inspector").value || "—");
-        var footerText = escapeHtml(document.getElementById("footerText").value || "").replace(/\n/g, "<br>");
+        var taskName = document.getElementById("taskName").value || "—";
+        var contractNo = document.getElementById("contractNo").value || "—";
+        var inspectDate = document.getElementById("inspectDate").value || "—";
+        var inspector = document.getElementById("inspector").value || "—";
+        var footerText = document.getElementById("footerText").value || "";
 
         var docHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
         docHtml += "<head><meta charset='utf-8'><title>Protokół z przeglądu gwarancyjnego</title>";
-        docHtml += "<style>";
-        docHtml += "body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; }";
-        docHtml += "table { width: 100%; border-collapse: collapse; }";
-        docHtml += ".header-tbl td { border: none; border-bottom: 2px solid #000; padding-bottom: 8px; vertical-align: middle; }";
-        docHtml += ".meta-box { border: 1.5pt solid #000; padding: 8pt; margin-top: 10pt; margin-bottom: 8pt; }";
-        docHtml += ".issues-tbl th, .issues-tbl td { border: 1pt solid #000; padding: 5pt; vertical-align: top; }";
-        docHtml += ".issues-tbl th { background-color: #f0f0f0; font-weight: bold; text-align: center; }";
-        docHtml += "</style></head><body>";
+        docHtml += "<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #000;padding:6px;vertical-align:top;} th{background:#f2f2f2;}</style>";
+        docHtml += "</head><body>";
 
-        // Nagłówek z logo w lewym rogu
-        docHtml += "<table class='header-tbl'><tr>";
-        if (savedLogoBase64) {
-            docHtml += "<td style='width: 140pt;'><img src='" + savedLogoBase64 + "' width='120'></td>";
+        docHtml += "<table style='border:none; margin-bottom:12px;'><tr>";
+        if (logoBase64) {
+            docHtml += "<td style='border:none; width:160px; vertical-align:middle;'><img src='" + logoBase64 + "' width='140'></td>";
         }
-        docHtml += "<td style='font-weight: bold; font-size: 11pt;'>Generalna Dyrekcja<br>Dróg Krajowych i Autostrad<br>Oddział w Białymstoku</td>";
+        docHtml += "<td style='border:none; vertical-align:middle; font-weight:bold; font-size:11pt;'>Generalna Dyrekcja<br>Dróg Krajowych i Autostrad<br>Oddział w Białymstoku</td>";
         docHtml += "</tr></table>";
+        docHtml += "<hr style='border:1px solid #000;'>";
 
-        docHtml += "<h2 style='text-align:center; text-transform:uppercase; font-size:14pt; margin:14pt 0;'>Protokół z przeglądu gwarancyjnego</h2>";
+        docHtml += "<h2 style='text-align:center; text-transform:uppercase; font-size:14pt; margin:14px 0;'>Protokół z przeglądu gwarancyjnego</h2>";
 
-        // Prostokąt z danymi jedno pod drugim
-        docHtml += "<div class='meta-box'>";
-        docHtml += "<p style='margin:2pt 0;'><strong>Nazwa zadania:</strong> " + taskName + "</p>";
-        docHtml += "<p style='margin:2pt 0;'><strong>Numer umowy:</strong> " + contractNo + "</p>";
-        docHtml += "<p style='margin:2pt 0;'><strong>Data kontroli:</strong> " + inspectDate + "</p>";
+        docHtml += "<div style='border:1px solid #000; padding:8px; margin-bottom:8px;'>";
+        docHtml += "<strong>Nazwa zadania:</strong> " + taskName + "<br>";
+        docHtml += "<strong>Numer umowy:</strong> " + contractNo + "<br>";
+        docHtml += "<strong>Data kontroli:</strong> " + inspectDate;
         docHtml += "</div>";
 
-        // Kontrolujący pod prostokątem
-        docHtml += "<p style='margin:6pt 0 12pt 0;'><strong>Kontrolujący:</strong> " + inspector + "</p>";
+        docHtml += "<p style='margin:6px 0 14px 0;'><strong>Kontrolujący:</strong> " + inspector + "</p>";
 
-        // Tabela usterek: Nr usterki / Opis usterki / Zdjęcia / Lokalizacja
-        docHtml += "<table class='issues-tbl'><thead><tr>";
+        docHtml += "<table><thead><tr>";
         docHtml += "<th style='width:8%;'>Nr usterki</th>";
-        docHtml += "<th style='width:34%;'>Opis usterki</th>";
-        docHtml += "<th style='width:36%;'>Zdjęcia</th>";
+        docHtml += "<th style='width:30%;'>Opis usterki</th>";
+        docHtml += "<th style='width:40%;'>Zdjęcia</th>";
         docHtml += "<th style='width:22%;'>Lokalizacja</th>";
         docHtml += "</tr></thead><tbody>";
 
@@ -718,95 +887,106 @@ ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialyst
             var photosArr = item.photos || (item.photo ? [item.photo] : []);
             docHtml += "<tr>";
             docHtml += "<td style='text-align:center; font-weight:bold;'>" + (i + 1) + "</td>";
-            docHtml += "<td>" + escapeHtml(item.description) + "</td>";
+            docHtml += "<td>" + item.description + "</td>";
             docHtml += "<td>";
             if (photosArr.length > 0) {
                 for (var p = 0; p < photosArr.length; p++) {
-                    docHtml += "<img src='" + photosArr[p] + "' width='160' style='margin-bottom:4pt; border:1px solid #ccc;'><br>";
+                    docHtml += "<img src='" + photosArr[p] + "' width='210' style='margin-bottom:4px;'><br>";
                 }
             } else {
                 docHtml += "—";
             }
             docHtml += "</td>";
-            docHtml += "<td style='font-size:8.5pt;'>" + escapeHtml(item.location) + "<br>Godz. " + item.time + "</td>";
+            docHtml += "<td style='font-size:9pt;'>" + item.location + "<br>(Godz. " + item.time + ")</td>";
             docHtml += "</tr>";
         }
         docHtml += "</tbody></table>";
 
-        // Podpis przedstawiciela komisji
-        docHtml += "<table style='margin-top:36pt;'><tr><td style='width:55%; border:none;'></td>";
-        docHtml += "<td style='width:45%; border:none; border-top:1pt solid #000; text-align:center; padding-top:4pt; font-size:9.5pt;'>Podpis przedstawiciela komisji</td></tr></table>";
+        docHtml += "<table style='border:none; margin-top:24px;'><tr>";
+        if (currentQrDataUrl) {
+            docHtml += "<td style='border:1px solid #999; width:52%; padding:6px; vertical-align:middle;'>";
+            docHtml += "<img src='" + currentQrDataUrl + "' width='85' style='float:left; margin-right:8px;'>";
+            docHtml += "<span style='font-size:8.5pt;'><strong>Mapa usterek (GPS)</strong><br>Zeskanuj kod QR aparatem telefonu, aby otworzyć mapę wszystkich usterek z nawigacją Google Maps.</span>";
+            docHtml += "</td>";
+        } else {
+            docHtml += "<td style='border:none; width:52%;'></td>";
+        }
+        docHtml += "<td style='border:none; width:8%;'></td>";
+        docHtml += "<td style='border:none; width:40%; vertical-align:bottom; text-align:center;'><div style='border-top:1px solid #000; padding-top:4px; font-size:9.5pt;'>Podpis przedstawiciela komisji</div></td>";
+        docHtml += "</tr></table>";
 
-        // Stopka na dole
         if (footerText) {
-            docHtml += "<div style='margin-top:24pt; border-top:1pt solid #666; padding-top:6pt; font-size:8pt; color:#333; text-align:center;'>" + footerText + "</div>";
+            docHtml += "<hr style='margin-top:24px; border:0.5px solid #666;'>";
+            docHtml += "<p style='font-size:8pt; color:#444; text-align:center;'>" + footerText + "</p>";
         }
 
         docHtml += "</body></html>";
 
-        var blob = new Blob(["\ufeff", docHtml], { type: "application/msword" });
+        var blob = new Blob(["﻿", docHtml], { type: "application/msword;charset=utf-8" });
         var url = URL.createObjectURL(blob);
-        var link = document.createElement("a");
-        var dateVal = document.getElementById("inspectDate").value || "protokol";
-        link.href = url;
-        link.download = "Protokol_przeglad_gwarancyjny_" + dateVal + ".docx";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "Protokol_przeglad_gwarancyjny_" + inspectDate + ".doc";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 200);
     }
 
-    // Zapis w pamięci telefonu
+    // Zapis i odczyt pamięci
     function saveToStorage() {
         var state = {
             taskName: document.getElementById("taskName").value,
             contractNo: document.getElementById("contractNo").value,
             inspector: document.getElementById("inspector").value,
+            footerText: document.getElementById("footerText").value,
+            logoBase64: logoBase64,
             issues: issues
         };
         try {
-            localStorage.setItem("protokol_gwarancyjny_v8", JSON.stringify(state));
-        } catch (e) {}
-    }
-
-    function saveLogoAndFooter() {
-        try {
-            localStorage.setItem("protokol_logo_v8", savedLogoBase64);
-            localStorage.setItem("protokol_footer_v8", document.getElementById("footerText").value);
-        } catch (e) {}
+            localStorage.setItem("protokol_terenowy_v9", JSON.stringify(state));
+        } catch (e) {
+            console.warn("Pamięć podręczna pełna.");
+        }
     }
 
     function loadFromStorage() {
-        try {
-            var logo = localStorage.getItem("protokol_logo_v8");
-            if (logo) {
-                savedLogoBase64 = logo;
-                renderLogoPreview();
-            }
-            var footer = localStorage.getItem("protokol_footer_v8");
-            if (footer !== null) {
-                document.getElementById("footerText").value = footer;
-            }
-            var saved = localStorage.getItem("protokol_gwarancyjny_v8") || localStorage.getItem("protokol_terenowy_v2");
-            if (saved) {
+        var saved = localStorage.getItem("protokol_terenowy_v9") || localStorage.getItem("protokol_terenowy_v8") || localStorage.getItem("protokol_terenowy_v7");
+        if (saved) {
+            try {
                 var state = JSON.parse(saved);
                 document.getElementById("taskName").value = state.taskName || "";
                 document.getElementById("contractNo").value = state.contractNo || "";
                 document.getElementById("inspector").value = state.inspector || "";
-                issues = state.issues || [];
+                if (state.footerText) {
+                    document.getElementById("footerText").value = state.footerText;
+                }
+                if (state.logoBase64) {
+                    logoBase64 = state.logoBase64;
+                    renderLogoPreview();
+                }
+                var loadedIssues = state.issues || [];
+                for (var i = 0; i < loadedIssues.length; i++) {
+                    if (!loadedIssues[i].photos && loadedIssues[i].photo) {
+                        loadedIssues[i].photos = [loadedIssues[i].photo];
+                    }
+                }
+                issues = loadedIssues;
                 renderIssues();
-            }
-        } catch (e) {}
+            } catch (e) {}
+        }
     }
 
     function clearAll() {
-        if (confirm("Czy na pewno wyczyścić usterki i dane zadania? (Logo i stopka pozostaną zapisane)")) {
-            localStorage.removeItem("protokol_gwarancyjny_v8");
+        if (confirm("Czy na pewno wyczyścić usterki oraz dane zadania? (Logo i stopka zostaną zachowane)")) {
             issues = [];
             currentPhotos = [];
             renderCurrentPhotos();
             document.getElementById("taskName").value = "";
             document.getElementById("contractNo").value = "";
+            saveToStorage();
             renderIssues();
         }
     }
