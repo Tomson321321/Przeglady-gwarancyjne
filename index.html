@@ -17,14 +17,14 @@
         }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; }
-        h1 { font-size: 1.35rem; text-align: center; color: var(--primary); margin-bottom: 20px; }
+        h1 { font-size: 1.35rem; text-align: center; color: var(--primary); margin-bottom: 18px; }
         h2 { font-size: 1.05rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         label.field-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; margin-top: 12px; }
         input[type="text"], input[type="date"], textarea {
             width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff;
         }
-        textarea { resize: vertical; min-height: 80px; }
+        textarea { resize: vertical; min-height: 85px; }
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
@@ -46,9 +46,8 @@
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        #logo-preview-box { margin-top: 10px; display: flex; align-items: center; gap: 12px; }
-        #logo-preview-box img { max-height: 55px; max-width: 180px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; background: #fff; }
         #preview-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 260px; object-fit: cover; border: 1px solid var(--border); display: block; }
+        #logo-preview img { max-height: 70px; max-width: 220px; object-fit: contain; margin-top: 8px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; background: #fff; display: block; }
         .status-box { font-size: 0.85rem; color: #374151; margin-top: 6px; background: #f9fafb; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.4; }
         
         .issue-item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa; }
@@ -59,50 +58,108 @@
         /* Style wyłącznie do wydruku / PDF */
         #print-section { display: none; }
         @media print {
-            @page { margin: 15mm 15mm 22mm 15mm; }
+            @page {
+                size: A4;
+                margin: 14mm 14mm 22mm 14mm;
+            }
             body { background: white; padding: 0; margin: 0; }
             .no-print { display: none !important; }
             #print-section { display: block !important; width: 100%; }
             
-            .print-top-brand {
+            .print-top-bar {
                 display: flex;
                 align-items: center;
-                gap: 15px;
+                justify-content: flex-start;
+                gap: 16px;
                 border-bottom: 2px solid #000;
-                padding-bottom: 12px;
-                margin-bottom: 15px;
+                padding-bottom: 10px;
+                margin-bottom: 14px;
             }
             .print-logo {
-                max-height: 60px;
-                max-width: 180px;
+                max-height: 65px;
+                max-width: 190px;
                 object-fit: contain;
             }
             .print-org-name {
                 font-size: 11pt;
-                font-weight: bold;
+                font-weight: 700;
                 line-height: 1.3;
                 color: #000;
             }
-            .print-header { margin-bottom: 18px; }
-            .print-header h1 { color: #000; text-align: center; margin: 0 0 14px 0; font-size: 16pt; text-transform: uppercase; }
-            .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10pt; background: #f9fafb; padding: 10px; border: 1px solid #ccc; }
-            
-            .print-issue { border: 1px solid #999; page-break-inside: avoid; margin-bottom: 14px; padding: 10px; border-radius: 4px; }
-            .print-issue-top { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 8px; font-size: 9.5pt; }
-            .print-issue-body { display: flex; gap: 15px; }
-            .print-issue-body img { max-width: 230px; max-height: 175px; object-fit: contain; border: 1px solid #ccc; }
-            .print-issue-text { flex: 1; font-size: 10pt; }
-            
-            .signatures { display: flex; justify-content: space-between; margin-top: 45px; margin-bottom: 30px; page-break-inside: avoid; }
-            .sig-box { width: 42%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 9pt; }
-            
+            .print-title-block {
+                margin-bottom: 14px;
+            }
+            .print-title-block h1 {
+                color: #000;
+                text-align: center;
+                margin: 0 0 12px 0;
+                font-size: 16pt;
+                text-transform: uppercase;
+            }
+            .print-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                font-size: 10pt;
+                border: 1px solid #999;
+                padding: 10px;
+                border-radius: 4px;
+            }
+            .print-issue {
+                border: 1px solid #999;
+                page-break-inside: avoid;
+                break-inside: avoid;
+                margin-bottom: 12px;
+                padding: 10px;
+                border-radius: 4px;
+            }
+            .print-issue-top {
+                display: flex;
+                justify-content: space-between;
+                font-weight: bold;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 5px;
+                margin-bottom: 8px;
+                font-size: 9.5pt;
+            }
+            .print-issue-body {
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+            }
+            .print-issue-body img {
+                max-width: 230px;
+                max-height: 170px;
+                object-fit: contain;
+                border: 1px solid #ccc;
+            }
+            .print-issue-text {
+                flex: 1;
+                font-size: 10pt;
+                line-height: 1.35;
+            }
+            .signatures {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 40px;
+                margin-bottom: 30px;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .sig-box {
+                width: 42%;
+                border-top: 1px solid #000;
+                text-align: center;
+                padding-top: 5px;
+                font-size: 9pt;
+            }
             .print-footer {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 right: 0;
-                border-top: 1px solid #666;
-                padding-top: 6px;
+                border-top: 1px solid #888;
+                padding-top: 5px;
                 font-size: 8.5pt;
                 color: #333;
                 text-align: center;
@@ -114,26 +171,29 @@
 <body>
 
 <div class="no-print">
-    <h1>📋 Protokół z Kontroli</h1>
+    <h1>📋 Protokół z Kontroli w Terenie</h1>
 
-    <!-- DANE OGÓLNE -->
+    <!-- DANE OGÓLNE I LOGO -->
     <div class="card">
         <h2>1. Nagłówek, logo i dane zadania</h2>
         
-        <label class="field-label">Logo instytucji / firmy (lewy górny róg PDF):</label>
+        <label class="field-label">Logo instytucji (lewy górny róg PDF):</label>
         <input type="file" id="logoInput" class="file-input-hidden" accept="image/*">
-        <label for="logoInput" class="btn btn-outline">🏢 Wybierz logo z galerii</label>
-        <div id="logo-preview-box"></div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <label for="logoInput" class="btn btn-outline" style="margin-top: 4px;">🏢 Wybierz logo z galerii</label>
+            <button type="button" class="btn btn-danger" id="btnRemoveLogo" style="display:none; margin-top: 4px;">Usuń</button>
+        </div>
+        <div id="logo-preview"></div>
 
-        <label class="field-label" for="orgName">Nazwa instytucji / Oddziału (obok logo):</label>
-        <textarea id="orgName" style="min-height: 68px;">Generalna Dyrekcja Dróg Krajowych i Autostrad
+        <label class="field-label" for="orgHeader">Nazwa jednostki w nagłówku:</label>
+        <textarea id="orgHeader" style="min-height: 60px;">Generalna Dyrekcja Dróg Krajowych i Autostrad
 Oddział w Białymstoku</textarea>
 
         <label class="field-label" for="taskName">Nazwa zadania / obiektu:</label>
-        <input type="text" id="taskName" placeholder="np. Przebudowa drogi krajowej...">
+        <input type="text" id="taskName" placeholder="np. Budowa obwodnicy / remont drogi krajowej nr...">
 
         <label class="field-label" for="contractNo">Numer umowy:</label>
-        <input type="text" id="contractNo" placeholder="np. UM/2026/14/INW">
+        <input type="text" id="contractNo" placeholder="np. O.BI.D-3.2410...">
 
         <label class="field-label" for="inspectDate">Data kontroli:</label>
         <input type="date" id="inspectDate">
@@ -141,8 +201,8 @@ Oddział w Białymstoku</textarea>
         <label class="field-label" for="inspector">Osoba kontrolująca:</label>
         <input type="text" id="inspector" placeholder="Imię i nazwisko / stanowisko">
 
-        <label class="field-label" for="footerText">Stopka na dole protokołu PDF:</label>
-        <input type="text" id="footerText" value="Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku">
+        <label class="field-label" for="footerText">Stopka na dole strony PDF:</label>
+        <input type="text" id="footerText" value="Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku, ul. Zwycięstwa 2, 15-703 Białystok">
     </div>
 
     <!-- DODAWANIE USTERKI -->
@@ -169,7 +229,7 @@ Oddział w Białymstoku</textarea>
             <button type="button" class="btn btn-mic" id="micBtn" title="Dyktuj głosowo">🎤</button>
         </div>
         <div id="micStatus" style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">
-            Kliknij w pole opisu i użyj ikony mikrofonu na klawiaturze iPhone'a.
+            Kliknij w pole tekstowe i użyj mikrofonu na klawiaturze telefonu (lub przycisku 🎤).
         </div>
 
         <button type="button" class="btn btn-primary" id="btnAddIssue">➕ Dodaj usterkę do protokołu</button>
@@ -190,13 +250,13 @@ Oddział w Białymstoku</textarea>
 
 <!-- SZABLON WYDRUKU PDF -->
 <div id="print-section">
-    <div class="print-top-brand">
-        <img id="p-logo" class="print-logo" style="display:none;" alt="Logo">
-        <div id="p-orgName" class="print-org-name"></div>
+    <div class="print-top-bar">
+        <img id="p-logo" class="print-logo" src="" alt="Logo" style="display:none;">
+        <div class="print-org-name" id="p-orgHeader"></div>
     </div>
 
-    <div class="print-header">
-        <h1>Protokół z kontroli w terenie</h1>
+    <div class="print-title-block">
+        <h1>PROTOKÓŁ Z KONTROLI W TERENIE</h1>
         <div class="print-grid">
             <div><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
             <div><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
@@ -212,15 +272,15 @@ Oddział w Białymstoku</textarea>
         <div class="sig-box">Podpis przedstawiciela Wykonawcy</div>
     </div>
 
-    <div id="p-footer" class="print-footer"></div>
+    <div class="print-footer" id="p-footerText"></div>
 </div>
 
 <script>
     var issues = [];
     var currentPhotoBase64 = "";
-    var currentLogoBase64 = "";
     var currentLocationText = "Nie pobrano lokalizacji";
     var currentCoords = "";
+    var savedLogoBase64 = "";
 
     document.addEventListener("DOMContentLoaded", function() {
         var dateInput = document.getElementById("inspectDate");
@@ -230,6 +290,7 @@ Oddział w Białymstoku</textarea>
         loadFromStorage();
 
         document.getElementById("logoInput").addEventListener("change", handleLogoUpload);
+        document.getElementById("btnRemoveLogo").addEventListener("click", removeLogo);
         document.getElementById("cameraInput").addEventListener("change", handleImageUpload);
         document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
         document.getElementById("btnGps").addEventListener("click", getLocation);
@@ -237,9 +298,12 @@ Oddział w Białymstoku</textarea>
         document.getElementById("btnAddIssue").addEventListener("click", addIssue);
         document.getElementById("btnPrint").addEventListener("click", prepareAndPrint);
         document.getElementById("btnClear").addEventListener("click", clearAll);
+
+        document.getElementById("orgHeader").addEventListener("input", saveSettings);
+        document.getElementById("footerText").addEventListener("input", saveSettings);
     });
 
-    // Obsługa logo instytucji
+    // 0. Obsługa Logo Instytucji
     function handleLogoUpload(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
@@ -250,46 +314,51 @@ Oddział w Białymstoku</textarea>
 
         img.onload = function() {
             var canvas = document.createElement("canvas");
-            var MAX_HEIGHT = 150;
+            var MAX_WIDTH = 450;
             var width = img.width;
             var height = img.height;
 
-            if (height > MAX_HEIGHT) {
-                width = Math.round((width * MAX_HEIGHT) / height);
-                height = MAX_HEIGHT;
+            if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
             }
 
             canvas.width = width;
             canvas.height = height;
             var ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
-            currentLogoBase64 = canvas.toDataURL("image/png");
+            savedLogoBase64 = canvas.toDataURL("image/png");
+
+            try {
+                localStorage.setItem("protokol_logo_gddkia", savedLogoBase64);
+            } catch (e) {}
 
             renderLogoPreview();
-            saveToStorage();
             URL.revokeObjectURL(objectUrl);
         };
         img.src = objectUrl;
     }
 
+    function removeLogo() {
+        savedLogoBase64 = "";
+        localStorage.removeItem("protokol_logo_gddkia");
+        document.getElementById("logoInput").value = "";
+        renderLogoPreview();
+    }
+
     function renderLogoPreview() {
-        var box = document.getElementById("logo-preview-box");
-        if (currentLogoBase64) {
-            box.innerHTML = "<img src='" + currentLogoBase64 + "' alt='Logo'>" +
-                            "<button type='button' class='btn btn-danger' onclick='removeLogo()'>Usuń logo</button>";
+        var preview = document.getElementById("logo-preview");
+        var btnRemove = document.getElementById("btnRemoveLogo");
+        if (savedLogoBase64) {
+            preview.innerHTML = "<img src='" + savedLogoBase64 + "' alt='Logo'>";
+            btnRemove.style.display = "inline-flex";
         } else {
-            box.innerHTML = "";
+            preview.innerHTML = "";
+            btnRemove.style.display = "none";
         }
     }
 
-    function removeLogo() {
-        currentLogoBase64 = "";
-        document.getElementById("logoInput").value = "";
-        renderLogoPreview();
-        saveToStorage();
-    }
-
-    // 1. Obsługa aparatu i galerii
+    // 1. Obsługa aparatu i galerii dla usterek
     function handleImageUpload(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
@@ -326,7 +395,7 @@ Oddział w Białymstoku</textarea>
         };
 
         img.onerror = function() {
-            previewEl.innerHTML = "<p style='color:#dc2626; font-size:0.85rem;'>⚠️ Nie udało się wczytać tego zdjęcia. Spróbuj ponownie.</p>";
+            previewEl.innerHTML = "<p style='color:#dc2626; font-size:0.85rem;'>⚠️ Nie udało się wczytać zdjęcia. Spróbuj ponownie.</p>";
             URL.revokeObjectURL(objectUrl);
         };
 
@@ -371,7 +440,7 @@ Oddział w Białymstoku</textarea>
             },
             function(err) {
                 var msg = "⚠️ Błąd GPS: ";
-                if (err.code === 1) msg += "Odmówiono dostępu do lokalizacji.";
+                if (err.code === 1) msg += "Odmówiono dostępu do lokalizacji w ustawieniach Safari/iPhone.";
                 else if (err.code === 2) msg += "Brak sygnału GPS.";
                 else msg += "Przekroczono czas oczekiwania.";
                 statusEl.innerText = msg;
@@ -394,7 +463,7 @@ Oddział w Białymstoku</textarea>
         recognition.onstart = function() {
             isRecording = true;
             document.getElementById("micBtn").classList.add("recording");
-            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz!</strong>";
+            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz do telefonu!</strong>";
         };
 
         recognition.onresult = function(event) {
@@ -404,24 +473,29 @@ Oddział w Białymstoku</textarea>
         };
 
         recognition.onerror = function(event) {
-            document.getElementById("micStatus").innerText = "⚠️ Użyj ikony mikrofonu na klawiaturze iPhone'a.";
+            document.getElementById("micStatus").innerText = "⚠️ Błąd mikrofonu (" + event.error + "). Użyj ikony mikrofonu na klawiaturze iPhone'a.";
         };
 
         recognition.onend = function() {
             isRecording = false;
             document.getElementById("micBtn").classList.remove("recording");
+            document.getElementById("micStatus").innerText = "Kliknij 🎤 aby dyktować dalej lub użyj mikrofonu na klawiaturze.";
         };
     }
 
     function toggleDictation() {
         if (!recognition) {
-            alert("Kliknij w pole opisu i użyj ikony mikrofonu na klawiaturze iPhone'a!");
+            alert("Kliknij w pole opisu usterki i naciśnij ikonę mikrofonu bezpośrednio na klawiaturze swojego iPhone'a!");
             return;
         }
         if (isRecording) {
             recognition.stop();
         } else {
-            try { recognition.start(); } catch (e) {}
+            try {
+                recognition.start();
+            } catch (e) {
+                alert("Użyj ikony mikrofonu na klawiaturze iPhone'a.");
+            }
         }
     }
 
@@ -494,22 +568,22 @@ Oddział w Białymstoku</textarea>
             return;
         }
 
-        var logoEl = document.getElementById("p-logo");
-        if (currentLogoBase64) {
-            logoEl.src = currentLogoBase64;
-            logoEl.style.display = "block";
+        var pLogo = document.getElementById("p-logo");
+        if (savedLogoBase64) {
+            pLogo.src = savedLogoBase64;
+            pLogo.style.display = "block";
         } else {
-            logoEl.style.display = "none";
+            pLogo.style.display = "none";
         }
 
-        var orgText = document.getElementById("orgName").value || "";
-        document.getElementById("p-orgName").innerHTML = orgText.replace(/\n/g, "<br>");
+        var orgHeaderVal = document.getElementById("orgHeader").value || "";
+        document.getElementById("p-orgHeader").innerHTML = orgHeaderVal.replace(/\n/g, "<br>");
 
         document.getElementById("p-taskName").innerText = document.getElementById("taskName").value || "—";
         document.getElementById("p-contractNo").innerText = document.getElementById("contractNo").value || "—";
         document.getElementById("p-inspectDate").innerText = document.getElementById("inspectDate").value || "—";
         document.getElementById("p-inspector").innerText = document.getElementById("inspector").value || "—";
-        document.getElementById("p-footer").innerText = document.getElementById("footerText").value || "";
+        document.getElementById("p-footerText").innerText = document.getElementById("footerText").value || "";
 
         var html = "";
         for (var i = 0; i < issues.length; i++) {
@@ -526,35 +600,54 @@ Oddział w Białymstoku</textarea>
         document.getElementById("p-issuesList").innerHTML = html;
 
         saveToStorage();
-        window.print();
+        saveSettings();
+        setTimeout(function() {
+            window.print();
+        }, 150);
+    }
+
+    function saveSettings() {
+        try {
+            localStorage.setItem("protokol_org_header", document.getElementById("orgHeader").value);
+            localStorage.setItem("protokol_footer_text", document.getElementById("footerText").value);
+        } catch (e) {}
     }
 
     function saveToStorage() {
         var state = {
-            logo: currentLogoBase64,
-            orgName: document.getElementById("orgName").value,
-            footerText: document.getElementById("footerText").value,
             taskName: document.getElementById("taskName").value,
             contractNo: document.getElementById("contractNo").value,
             inspector: document.getElementById("inspector").value,
             issues: issues
         };
         try {
-            localStorage.setItem("protokol_gddkia_v3", JSON.stringify(state));
-        } catch (e) {}
+            localStorage.setItem("protokol_terenowy_v3", JSON.stringify(state));
+        } catch (e) {
+            console.warn("Pamięć podręczna pełna.");
+        }
     }
 
     function loadFromStorage() {
-        var saved = localStorage.getItem("protokol_gddkia_v3");
+        var logo = localStorage.getItem("protokol_logo_gddkia");
+        if (logo) {
+            savedLogoBase64 = logo;
+            renderLogoPreview();
+        }
+
+        var savedHeader = localStorage.getItem("protokol_org_header");
+        if (savedHeader !== null) {
+            document.getElementById("orgHeader").value = savedHeader;
+        }
+
+        var savedFooter = localStorage.getItem("protokol_footer_text");
+        if (savedFooter !== null) {
+            document.getElementById("footerText").value = savedFooter;
+        }
+
+        var saved = localStorage.getItem("protokol_terenowy_v3");
         if (saved) {
             try {
                 var state = JSON.parse(saved);
-                if (state.logo) {
-                    currentLogoBase64 = state.logo;
-                    renderLogoPreview();
-                }
-                if (state.orgName) document.getElementById("orgName").value = state.orgName;
-                if (state.footerText) document.getElementById("footerText").value = state.footerText;
                 document.getElementById("taskName").value = state.taskName || "";
                 document.getElementById("contractNo").value = state.contractNo || "";
                 document.getElementById("inspector").value = state.inspector || "";
@@ -565,11 +658,11 @@ Oddział w Białymstoku</textarea>
     }
 
     function clearAll() {
-        if (confirm("Wyczyścić listę usterek oraz nazwę zadania i nr umowy? (Logo i stopka zostaną zachowane)")) {
+        if (confirm("Czy wyczyścić listę usterek oraz dane zadania? (Logo i stopka pozostaną zapisane)")) {
+            localStorage.removeItem("protokol_terenowy_v3");
             issues = [];
             document.getElementById("taskName").value = "";
             document.getElementById("contractNo").value = "";
-            saveToStorage();
             renderIssues();
         }
     }
