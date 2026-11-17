@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Protokół Kontroli w Terenie v7</title>
+    <title>Protokół z przeglądu gwarancyjnego</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -19,7 +19,7 @@
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; }
         h1 { font-size: 1.35rem; text-align: center; color: var(--primary); margin-bottom: 20px; }
-        h2 { font-size: 1.05rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
+        h2 { font-size: 1.1rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         label.field-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; margin-top: 12px; }
         input[type="text"], input[type="date"], textarea {
@@ -44,103 +44,141 @@
         .voice-row { display: flex; gap: 8px; align-items: stretch; margin-top: 5px; }
         .btn-mic { width: auto; min-width: 54px; padding: 0 14px; margin-top: 0; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 1.3rem; }
         .btn-mic.recording { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.2s infinite; }
+        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* Podgląd wielu zdjęć przed dodaniem usterki */
-        #preview-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
-        .preview-thumb { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #f9fafb; height: 150px; }
+        /* Miniatury zdjęć przed dodaniem usterki */
+        #preview-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; margin-top: 12px; }
+        .preview-thumb { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; aspect-ratio: 1 / 1; }
         .preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .btn-del-photo {
-            position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 50%;
-            background: rgba(220, 38, 38, 0.95); color: white; border: 2px solid white;
-            font-size: 16px; font-weight: bold; line-height: 1; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        .btn-remove-photo {
+            position: absolute; top: 4px; right: 4px; width: 28px; height: 28px;
+            background: rgba(220, 38, 38, 0.92); color: white; border: none; border-radius: 50%;
+            font-weight: bold; font-size: 15px; line-height: 28px; text-align: center; padding: 0; cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
         }
-
-        /* Podgląd logo */
-        .logo-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-        #logo-preview { max-height: 55px; max-width: 160px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; background: #fff; display: none; }
 
         .status-box { font-size: 0.85rem; color: #374151; margin-top: 6px; background: #f9fafb; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.4; }
         
         .issue-item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa; }
         .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .issue-photos-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 8px 0; }
-        .issue-img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; background: #eee; display: block; border: 1px solid #ddd; }
+        .issue-photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 8px 0; }
+        .issue-img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; background: #eee; border: 1px solid #ddd; display: block; }
         .issue-meta { font-size: 0.82rem; color: #4b5563; }
 
-        /* Widok podglądu protokołu PDF na ekranie i do wydruku */
-        #print-wrapper { display: none; background: #fff; }
+        /* Logo podgląd w formularzu */
+        #logo-preview-box { margin-top: 8px; display: flex; align-items: center; gap: 10px; }
+        #logo-preview-box img { max-height: 55px; max-width: 180px; border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px; background: #fff; }
+
+        /* Widok podglądu protokołu */
+        #print-wrapper { display: none; background: #525659; min-height: 100vh; padding: 10px; }
         .print-toolbar {
             position: sticky; top: 0; z-index: 100; background: #1f2937; color: white;
-            padding: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 10px; border-radius: 10px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;
         }
         .print-toolbar button {
-            padding: 10px 14px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer;
+            padding: 10px 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; flex: 1; min-width: 130px;
         }
-        #print-document {
-            max-width: 800px; margin: 0 auto; padding: 20px; background: #fff; color: #000;
+        .btn-tool-back { background: #4b5563; color: white; }
+        .btn-tool-pdf { background: #059669; color: white; }
+        .btn-tool-docx { background: #2563eb; color: white; }
+        .btn-tool-print { background: #f59e0b; color: #111827; }
+
+        #print-section {
+            background: white; color: #000; max-width: 210mm; margin: 0 auto; padding: 14mm;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-family: Arial, Helvetica, sans-serif;
         }
-        .doc-top-bar {
-            display: flex; align-items: center; gap: 16px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px;
+
+        /* Nagłówek protokołu - logo po lewej */
+        .print-top-bar {
+            display: flex; align-items: center; gap: 16px; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 14px;
         }
-        .doc-logo { max-height: 75px; max-width: 180px; object-fit: contain; }
-        .doc-org-name { font-size: 12pt; font-weight: bold; line-height: 1.3; }
-        .doc-title { font-size: 16pt; font-weight: bold; text-align: center; margin: 14px 0; letter-spacing: 0.5px; }
-        .doc-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10pt; margin-bottom: 18px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; }
-        .doc-issue { border: 1px solid #888; margin-bottom: 14px; padding: 10px; border-radius: 4px; page-break-inside: avoid; }
-        .doc-issue-head { display: flex; justify-content: space-between; font-weight: bold; font-size: 10pt; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 8px; }
-        .doc-issue-desc { font-size: 10pt; margin-bottom: 8px; white-space: pre-wrap; }
-        .doc-issue-photos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .doc-issue-photos img { width: 100%; max-height: 200px; object-fit: contain; border: 1px solid #ccc; background: #f9f9f9; }
-        .doc-signatures { display: flex; justify-content: space-between; margin-top: 45px; page-break-inside: avoid; }
-        .doc-sig-box { width: 42%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 9pt; }
-        .doc-footer { margin-top: 30px; border-top: 1px solid #999; padding-top: 8px; font-size: 8.5pt; color: #333; text-align: center; white-space: pre-line; }
+        .print-logo-left img { max-height: 65px; max-width: 160px; object-fit: contain; display: block; }
+        .print-inst-name { font-size: 11pt; font-weight: bold; line-height: 1.3; color: #000; }
+        .print-doc-title { font-size: 15pt; font-weight: bold; text-align: center; margin: 12px 0 14px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Prostokąt z danymi jedno pod drugim */
+        .print-meta-box {
+            border: 1.5px solid #000; padding: 10px 12px; margin-bottom: 10px; font-size: 10pt; line-height: 1.6;
+        }
+        .print-meta-row { margin-bottom: 4px; }
+        .print-meta-row:last-child { margin-bottom: 0; }
+
+        /* Kontrolujący pod prostokątem */
+        .print-inspector-line {
+            font-size: 10pt; margin-bottom: 16px; padding: 4px 2px;
+        }
+
+        /* Tabela usterek */
+        .print-table {
+            width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 20px;
+        }
+        .print-table th, .print-table td {
+            border: 1px solid #000; padding: 7px 8px; vertical-align: top; text-align: left;
+        }
+        .print-table th {
+            background-color: #f0f0f0; font-weight: bold; text-align: center;
+        }
+        .col-nr { width: 8%; text-align: center !important; font-weight: bold; }
+        .col-desc { width: 34%; }
+        .col-photos { width: 36%; }
+        .col-loc { width: 22%; font-size: 8.5pt; }
+
+        .table-photos-wrap {
+            display: flex; flex-wrap: wrap; gap: 6px;
+        }
+        .table-photos-wrap img {
+            max-width: 100%; max-height: 135px; object-fit: contain; border: 1px solid #ccc; display: block;
+        }
+
+        /* Podpis tylko przedstawiciela komisji */
+        .signatures { display: flex; justify-content: flex-end; margin-top: 40px; page-break-inside: avoid; }
+        .sig-box { width: 45%; border-top: 1px solid #000; text-align: center; padding-top: 6px; font-size: 9.5pt; }
+
+        /* Stopka na dole protokołu */
+        .print-footer {
+            margin-top: 30px; padding-top: 8px; border-top: 1px solid #666;
+            font-size: 8pt; color: #333; text-align: center; white-space: pre-line;
+        }
 
         @media print {
-            body { background: white; padding: 0; margin: 0; }
-            #form-wrapper, .print-toolbar { display: none !important; }
-            #print-wrapper { display: block !important; }
-            #print-document { padding: 0; max-width: 100%; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; }
+            .no-print, .print-toolbar { display: none !important; }
+            #print-wrapper { display: block !important; background: white !important; padding: 0 !important; }
+            #print-section { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+            .print-table tr { page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
 
-<div id="form-wrapper">
-    <h1>📋 Protokół z Kontroli v7</h1>
+<div class="no-print" id="editor-wrapper">
+    <h1>📋 Protokół z przeglądu gwarancyjnego</h1>
 
     <!-- DANE OGÓLNE -->
     <div class="card">
-        <h2>1. Dane ogólne i nagłówek</h2>
+        <h2>1. Dane ogólne zadania i nagłówek</h2>
         
-        <label class="field-label">Logo instytucji (lewy górny róg):</label>
+        <label class="field-label">Logo instytucji / firmy (lewy górny róg):</label>
         <input type="file" id="logoInput" class="file-input-hidden" accept="image/*">
-        <div class="logo-row">
-            <label for="logoInput" class="btn btn-outline" style="margin-top:0; width:auto; padding:8px 14px; font-size:0.9rem;">🏢 Wybierz logo</label>
-            <img id="logo-preview" alt="Logo">
-            <button type="button" id="btnClearLogo" class="btn btn-danger" style="display:none;">Usuń</button>
-        </div>
-
-        <label class="field-label" for="orgName">Nagłówek instytucji (obok logo):</label>
-        <textarea id="orgName" style="min-height:65px;">Generalna Dyrekcja Dróg Krajowych i Autostrad
-Oddział w Białymstoku</textarea>
+        <label for="logoInput" class="btn btn-outline">🏢 Wybierz logo z galerii</label>
+        <div id="logo-preview-box"></div>
 
         <label class="field-label" for="taskName">Nazwa zadania / obiektu:</label>
-        <input type="text" id="taskName" placeholder="np. Przebudowa drogi krajowej...">
+        <input type="text" id="taskName" placeholder="np. Przebudowa drogi krajowej nr 8...">
 
         <label class="field-label" for="contractNo">Numer umowy:</label>
-        <input type="text" id="contractNo" placeholder="np. UM/2026/14/INW">
+        <input type="text" id="contractNo" placeholder="np. O/BI.D-3.2410.12.2026">
 
         <label class="field-label" for="inspectDate">Data kontroli:</label>
         <input type="date" id="inspectDate">
 
-        <label class="field-label" for="inspector">Osoba kontrolująca:</label>
+        <label class="field-label" for="inspector">Kontrolujący / Przedstawiciele komisji:</label>
         <input type="text" id="inspector" placeholder="Imię i nazwisko / stanowisko">
 
         <label class="field-label" for="footerText">Stopka na dole protokołu:</label>
-        <textarea id="footerText" style="min-height:60px; font-size:0.85rem;">Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku | ul. Zwycięstwa 2, 15-703 Białystok</textarea>
+        <textarea id="footerText" style="min-height: 60px; font-size: 0.85rem;">Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku
+ul. Zwycięstwa 2, 15-703 Białystok | tel. (85) 664 58 00 | sekretariat_bialystok@gddkia.gov.pl</textarea>
     </div>
 
     <!-- DODAWANIE USTERKI -->
@@ -155,8 +193,7 @@ Oddział w Białymstoku</textarea>
             <label for="cameraInput" class="btn btn-outline">📷 Zrób zdjęcie</label>
             <label for="galleryInput" class="btn btn-outline">🖼️ Z galerii</label>
         </div>
-        <div id="photoLoadStatus" style="font-size:0.85rem; color:#1a56db; margin-top:6px;"></div>
-        <div id="preview-grid"></div>
+        <div id="preview-container"></div>
 
         <label class="field-label">Lokalizacja GPS:</label>
         <div class="status-box" id="gpsStatus">Kliknij przycisk poniżej lub zrób zdjęcie, aby pobrać lokalizację.</div>
@@ -168,7 +205,7 @@ Oddział w Białymstoku</textarea>
             <button type="button" class="btn btn-mic" id="micBtn" title="Dyktuj głosowo">🎤</button>
         </div>
         <div id="micStatus" style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">
-            Na iPhonie kliknij w pole opisu i użyj ikony mikrofonu na klawiaturze.
+            Kliknij 🎤 aby dyktować lub użyj mikrofonu na klawiaturze telefonu.
         </div>
 
         <button type="button" class="btn btn-primary" id="btnAddIssue">➕ Dodaj usterkę do protokołu</button>
@@ -182,49 +219,72 @@ Oddział w Białymstoku</textarea>
         </div>
     </div>
 
-    <!-- GENEROWANIE PDF -->
-    <button type="button" class="btn btn-success" id="btnGenerate">📄 Generuj Protokół PDF / Podgląd</button>
-    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" id="btnClear">🗑️ Wyczyść listę usterek (nowy protokół)</button>
+    <!-- GENEROWANIE PROTOKOŁU -->
+    <button type="button" class="btn btn-success" id="btnGenerate">📄 Generuj protokół</button>
+    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" id="btnClear">🗑️ Wyczyść usterki i dane zadania</button>
 </div>
 
-<!-- WIDOK GOTOWEGO PROTOKOŁU PDF -->
+<!-- EKRAN PODGLĄDU I EKSPORTU PROTOKOŁU -->
 <div id="print-wrapper">
-    <div class="print-toolbar">
-        <button type="button" id="btnBackToEdit" style="background:#4b5563; color:white;">⬅️ Wróć do edycji</button>
-        <button type="button" id="btnDownloadPdf" style="background:#059669; color:white;">⬇️ Pobierz gotowy PDF</button>
-        <button type="button" id="btnSystemPrint" style="background:#2563eb; color:white;">🖨️ Drukuj systemowo</button>
+    <div class="print-toolbar no-print">
+        <button type="button" class="btn-tool-back" id="btnBackToEdit">⬅️ Wróć do edycji</button>
+        <button type="button" class="btn-tool-pdf" id="btnDownloadPdf">⬇️ Pobierz PDF</button>
+        <button type="button" class="btn-tool-docx" id="btnDownloadDocx">📝 Pobierz DOCX</button>
+        <button type="button" class="btn-tool-print" id="btnSystemPrint">🖨️ Drukuj</button>
     </div>
 
-    <div id="print-document">
-        <div class="doc-top-bar">
-            <img id="p-logo" class="doc-logo" style="display:none;" alt="Logo">
-            <div id="p-orgName" class="doc-org-name" style="white-space: pre-line;"></div>
+    <div id="print-section">
+        <!-- NAGŁÓWEK Z LOGO PO LEWEJ -->
+        <div class="print-top-bar">
+            <div class="print-logo-left" id="p-logoContainer"></div>
+            <div class="print-inst-name">
+                Generalna Dyrekcja<br>
+                Dróg Krajowych i Autostrad<br>
+                Oddział w Białymstoku
+            </div>
         </div>
 
-        <div class="doc-title">PROTOKÓŁ Z KONTROLI W TERENIE</div>
+        <div class="print-doc-title">Protokół z przeglądu gwarancyjnego</div>
 
-        <div class="doc-meta-grid">
-            <div><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
-            <div><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
-            <div><strong>Data kontroli:</strong> <span id="p-inspectDate"></span></div>
-            <div><strong>Kontrolujący:</strong> <span id="p-inspector"></span></div>
+        <!-- PROSTOKĄT Z DANYMI JEDNO POD DRUGIM -->
+        <div class="print-meta-box">
+            <div class="print-meta-row"><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
+            <div class="print-meta-row"><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
+            <div class="print-meta-row"><strong>Data kontroli:</strong> <span id="p-inspectDate"></span></div>
         </div>
 
-        <div id="p-issuesList"></div>
-
-        <div class="doc-signatures">
-            <div class="doc-sig-box">Podpis osoby kontrolującej</div>
-            <div class="doc-sig-box">Podpis przedstawiciela Wykonawcy</div>
+        <!-- KONTROLUJĄCY POD PROSTOKĄTEM -->
+        <div class="print-inspector-line">
+            <strong>Kontrolujący:</strong> <span id="p-inspector"></span>
         </div>
 
-        <div id="p-footer" class="doc-footer"></div>
+        <!-- TABELA USTEREK: NR / OPIS / ZDJĘCIA / LOKALIZACJA -->
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th class="col-nr">Nr usterki</th>
+                    <th class="col-desc">Opis usterki</th>
+                    <th class="col-photos">Zdjęcia</th>
+                    <th class="col-loc">Lokalizacja</th>
+                </tr>
+            </thead>
+            <tbody id="p-issuesTableBody"></tbody>
+        </table>
+
+        <!-- PODPIS PRZEDSTAWICIELA KOMISJI -->
+        <div class="signatures">
+            <div class="sig-box">Podpis przedstawiciela komisji</div>
+        </div>
+
+        <!-- STOPKA NA DOLE -->
+        <div class="print-footer" id="p-footerText"></div>
     </div>
 </div>
 
 <script>
     var issues = [];
     var currentPhotos = [];
-    var currentLogoBase64 = "";
+    var savedLogoBase64 = "";
     var currentLocationText = "Nie pobrano lokalizacji";
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -235,149 +295,141 @@ Oddział w Białymstoku</textarea>
         loadFromStorage();
 
         document.getElementById("logoInput").addEventListener("change", handleLogoUpload);
-        document.getElementById("btnClearLogo").addEventListener("click", clearLogo);
-        document.getElementById("cameraInput").addEventListener("change", handleImagesUpload);
-        document.getElementById("galleryInput").addEventListener("change", handleImagesUpload);
+        document.getElementById("cameraInput").addEventListener("change", handleImageUpload);
+        document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
         document.getElementById("btnGps").addEventListener("click", getLocation);
         document.getElementById("micBtn").addEventListener("click", toggleDictation);
         document.getElementById("btnAddIssue").addEventListener("click", addIssue);
         document.getElementById("btnGenerate").addEventListener("click", openProtocolPreview);
         document.getElementById("btnBackToEdit").addEventListener("click", closeProtocolPreview);
         document.getElementById("btnDownloadPdf").addEventListener("click", downloadPdfFile);
+        document.getElementById("btnDownloadDocx").addEventListener("click", downloadDocxFile);
         document.getElementById("btnSystemPrint").addEventListener("click", function() { window.print(); });
         document.getElementById("btnClear").addEventListener("click", clearAll);
+
+        document.getElementById("footerText").addEventListener("input", saveLogoAndFooter);
     });
 
-    // Logo
+    // Obsługa logo instytucji
     function handleLogoUpload(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
         var file = files[0];
         var objectUrl = URL.createObjectURL(file);
         var img = new Image();
+
         img.onload = function() {
             var canvas = document.createElement("canvas");
-            var MAX_H = 160;
-            var width = img.width;
-            var height = img.height;
-            if (height > MAX_H) {
-                width = Math.round((width * MAX_H) / height);
-                height = MAX_H;
+            var MAX_W = 400;
+            var w = img.width;
+            var h = img.height;
+            if (w > MAX_W) {
+                h = Math.round((h * MAX_W) / w);
+                w = MAX_W;
             }
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = w;
+            canvas.height = h;
             var ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, width, height);
-            currentLogoBase64 = canvas.toDataURL("image/png");
-            updateLogoPreview();
-            saveSettingsToStorage();
+            ctx.drawImage(img, 0, 0, w, h);
+            savedLogoBase64 = canvas.toDataURL("image/png");
+            renderLogoPreview();
+            saveLogoAndFooter();
             URL.revokeObjectURL(objectUrl);
         };
         img.src = objectUrl;
     }
 
-    function updateLogoPreview() {
-        var imgEl = document.getElementById("logo-preview");
-        var delBtn = document.getElementById("btnClearLogo");
-        if (currentLogoBase64) {
-            imgEl.src = currentLogoBase64;
-            imgEl.style.display = "block";
-            delBtn.style.display = "inline-flex";
+    function renderLogoPreview() {
+        var box = document.getElementById("logo-preview-box");
+        if (savedLogoBase64) {
+            box.innerHTML = "<img src='" + savedLogoBase64 + "' alt='Logo'><button type='button' class='btn btn-danger' onclick='removeLogo()'>Usuń logo</button>";
         } else {
-            imgEl.style.display = "none";
-            delBtn.style.display = "none";
+            box.innerHTML = "";
         }
     }
 
-    function clearLogo() {
-        currentLogoBase64 = "";
-        document.getElementById("logoInput").value = "";
-        updateLogoPreview();
-        saveSettingsToStorage();
+    function removeLogo() {
+        savedLogoBase64 = "";
+        renderLogoPreview();
+        saveLogoAndFooter();
     }
 
-    // Wiele zdjęć do jednej usterki + usuwanie
-    function handleImagesUpload(event) {
+    // Obsługa wielu zdjęć do jednej usterki
+    function handleImageUpload(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
 
-        var statusEl = document.getElementById("photoLoadStatus");
-        statusEl.innerText = "⏳ Wczytywanie zdjęć (" + files.length + ")...";
         getLocation();
 
-        var processedCount = 0;
-        var totalFiles = files.length;
-
-        for (var f = 0; f < totalFiles; f++) {
-            (function(file) {
-                var objectUrl = URL.createObjectURL(file);
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement("canvas");
-                    var MAX_WIDTH = 800;
-                    var width = img.width;
-                    var height = img.height;
-                    if (width > MAX_WIDTH) {
-                        height = Math.round((height * MAX_WIDTH) / width);
-                        width = MAX_WIDTH;
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    var ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0, width, height);
-                    var base64 = canvas.toDataURL("image/jpeg", 0.72);
-                    currentPhotos.push(base64);
-                    URL.revokeObjectURL(objectUrl);
-
-                    processedCount++;
-                    if (processedCount === totalFiles) {
-                        statusEl.innerText = "";
-                        renderPreviewGrid();
-                    }
-                };
-                img.onerror = function() {
-                    URL.revokeObjectURL(objectUrl);
-                    processedCount++;
-                    if (processedCount === totalFiles) {
-                        statusEl.innerText = "";
-                        renderPreviewGrid();
-                    }
-                };
-                img.src = objectUrl;
-            })(files[f]);
+        for (var f = 0; f < files.length; f++) {
+            processSinglePhoto(files[f]);
         }
         event.target.value = "";
     }
 
-    function removePreviewPhoto(index) {
-        currentPhotos.splice(index, 1);
-        renderPreviewGrid();
+    function processSinglePhoto(file) {
+        var objectUrl = URL.createObjectURL(file);
+        var img = new Image();
+
+        img.onload = function() {
+            var canvas = document.createElement("canvas");
+            var MAX_WIDTH = 800;
+            var width = img.width;
+            var height = img.height;
+
+            if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            var base64Data = canvas.toDataURL("image/jpeg", 0.72);
+
+            currentPhotos.push(base64Data);
+            renderCurrentPhotos();
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.onerror = function() {
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.src = objectUrl;
     }
 
-    function renderPreviewGrid() {
-        var gridEl = document.getElementById("preview-grid");
+    function renderCurrentPhotos() {
+        var container = document.getElementById("preview-container");
         if (currentPhotos.length === 0) {
-            gridEl.innerHTML = "";
+            container.innerHTML = "";
             return;
         }
         var html = "";
         for (var i = 0; i < currentPhotos.length; i++) {
             html += "<div class='preview-thumb'>";
             html += "<img src='" + currentPhotos[i] + "' alt='Zdjęcie " + (i + 1) + "'>";
-            html += "<button type='button' class='btn-del-photo' onclick='removePreviewPhoto(" + i + ")' title='Usuń zdjęcie'>✕</button>";
+            html += "<button type='button' class='btn-remove-photo' onclick='removeCurrentPhoto(" + i + ")' title='Usuń zdjęcie'>✕</button>";
             html += "</div>";
         }
-        gridEl.innerHTML = html;
+        container.innerHTML = html;
     }
 
-    // GPS
+    function removeCurrentPhoto(index) {
+        currentPhotos.splice(index, 1);
+        renderCurrentPhotos();
+    }
+
+    // Pobieranie GPS i zamiana na adres
     function getLocation() {
         var statusEl = document.getElementById("gpsStatus");
         if (!navigator.geolocation) {
-            statusEl.innerText = "⚠️ Przeglądarka nie obsługuje GPS.";
+            statusEl.innerText = "⚠️ Twoja przeglądarka nie obsługuje GPS.";
             return;
         }
-        statusEl.innerHTML = "⏳ <strong>Pobieranie lokalizacji GPS...</strong>";
+        statusEl.innerHTML = "⏳ <strong>Szukam sygnału GPS...</strong>";
 
         navigator.geolocation.getCurrentPosition(
             function(position) {
@@ -385,7 +437,7 @@ Oddział w Białymstoku</textarea>
                 var lon = position.coords.longitude.toFixed(6);
                 var coords = lat + ", " + lon;
                 currentLocationText = "GPS: " + coords;
-                statusEl.innerHTML = "📍 Współrzędne: <strong>" + coords + "</strong> (szukam ulicy...)";
+                statusEl.innerHTML = "📍 Współrzędne: <strong>" + coords + "</strong> (pobieram adres...)";
 
                 fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&addressdetails=1")
                     .then(function(res) { return res.json(); })
@@ -407,15 +459,20 @@ Oddział w Białymstoku</textarea>
                     });
             },
             function(err) {
-                statusEl.innerText = "⚠️ Błąd GPS (" + err.message + "). Sprawdź uprawnienia lokalizacji w Safari.";
+                var msg = "⚠️ Błąd GPS: ";
+                if (err.code === 1) msg += "Odmówiono dostępu do lokalizacji.";
+                else if (err.code === 2) msg += "Brak sygnału GPS.";
+                else msg += "Przekroczono czas oczekiwania.";
+                statusEl.innerText = msg;
             },
             { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
     }
 
-    // Dyktowanie
+    // Dyktowanie głosowe
     var recognition = null;
     var isRecording = false;
+
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
         var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
@@ -426,23 +483,29 @@ Oddział w Białymstoku</textarea>
         recognition.onstart = function() {
             isRecording = true;
             document.getElementById("micBtn").classList.add("recording");
-            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Mów teraz...</strong>";
+            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz do telefonu!</strong>";
         };
+
         recognition.onresult = function(event) {
             var transcript = event.results[0][0].transcript;
             var descEl = document.getElementById("issueDesc");
             descEl.value += (descEl.value ? " " : "") + transcript;
         };
+
+        recognition.onerror = function() {
+            document.getElementById("micStatus").innerText = "⚠️ Użyj ikony mikrofonu bezpośrednio na klawiaturze telefonu.";
+        };
+
         recognition.onend = function() {
             isRecording = false;
             document.getElementById("micBtn").classList.remove("recording");
-            document.getElementById("micStatus").innerText = "Na iPhonie kliknij w pole opisu i użyj ikony mikrofonu na klawiaturze.";
+            document.getElementById("micStatus").innerText = "Kliknij 🎤 aby dyktować dalej lub użyj mikrofonu na klawiaturze.";
         };
     }
 
     function toggleDictation() {
         if (!recognition) {
-            alert("Kliknij w pole opisu i użyj ikony mikrofonu w prawym dolnym rogu klawiatury iPhone'a.");
+            alert("Kliknij w pole opisu usterki i naciśnij ikonę mikrofonu na klawiaturze swojego telefonu!");
             return;
         }
         if (isRecording) {
@@ -452,11 +515,11 @@ Oddział w Białymstoku</textarea>
         }
     }
 
-    // Dodawanie usterki
+    // Dodawanie usterki do listy
     function addIssue() {
         var desc = document.getElementById("issueDesc").value.trim();
         if (!desc && currentPhotos.length === 0) {
-            alert("Zrób przynajmniej jedno zdjęcie lub wpisz opis usterki!");
+            alert("Zrób zdjęcie lub wpisz opis usterki przed kliknięciem Dodaj!");
             return;
         }
 
@@ -472,7 +535,7 @@ Oddział w Białymstoku</textarea>
         });
 
         currentPhotos = [];
-        renderPreviewGrid();
+        renderCurrentPhotos();
         document.getElementById("issueDesc").value = "";
 
         saveToStorage();
@@ -480,8 +543,8 @@ Oddział w Białymstoku</textarea>
     }
 
     function deleteIssue(id) {
-        if (confirm("Usunąć tę usterkę z protokołu?")) {
-            issues = issues.filter(function(item) { return item.id !== id; });
+        if (confirm("Usunąć tę usterkę z listy?")) {
+            issues = issues.filter(function(i) { return i.id !== id; });
             saveToStorage();
             renderIssues();
         }
@@ -499,13 +562,13 @@ Oddział w Białymstoku</textarea>
         var html = "";
         for (var i = 0; i < issues.length; i++) {
             var item = issues[i];
-            var photosArr = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
+            var photosArr = item.photos || (item.photo ? [item.photo] : []);
             html += "<div class='issue-item'>";
-            html += "<div class='issue-header'><strong>Usterka #" + (i + 1) + " (" + item.time + ")</strong>";
+            html += "<div class='issue-header'><strong>Usterka nr " + (i + 1) + " (" + item.time + ")</strong>";
             html += "<button type='button' class='btn btn-danger' onclick='deleteIssue(" + item.id + ")'>Usuń</button></div>";
             html += "<div class='issue-meta'>📍 " + item.location + "</div>";
             if (photosArr.length > 0) {
-                html += "<div class='issue-photos-list'>";
+                html += "<div class='issue-photos-grid'>";
                 for (var p = 0; p < photosArr.length; p++) {
                     html += "<img src='" + photosArr[p] + "' class='issue-img'>";
                 }
@@ -517,71 +580,85 @@ Oddział w Białymstoku</textarea>
         listEl.innerHTML = html;
     }
 
-    // Podgląd protokołu i PDF
+    // Otwieranie podglądu protokołu
     function openProtocolPreview() {
         if (issues.length === 0) {
-            alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu!");
+            alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu.");
             return;
         }
 
-        var pLogo = document.getElementById("p-logo");
-        if (currentLogoBase64) {
-            pLogo.src = currentLogoBase64;
-            pLogo.style.display = "block";
+        var logoCont = document.getElementById("p-logoContainer");
+        if (savedLogoBase64) {
+            logoCont.innerHTML = "<img src='" + savedLogoBase64 + "' alt='Logo'>";
+            logoCont.style.display = "block";
         } else {
-            pLogo.style.display = "none";
+            logoCont.innerHTML = "";
+            logoCont.style.display = "none";
         }
 
-        document.getElementById("p-orgName").innerText = document.getElementById("orgName").value || "";
         document.getElementById("p-taskName").innerText = document.getElementById("taskName").value || "—";
         document.getElementById("p-contractNo").innerText = document.getElementById("contractNo").value || "—";
         document.getElementById("p-inspectDate").innerText = document.getElementById("inspectDate").value || "—";
         document.getElementById("p-inspector").innerText = document.getElementById("inspector").value || "—";
-        document.getElementById("p-footer").innerText = document.getElementById("footerText").value || "";
+        document.getElementById("p-footerText").innerText = document.getElementById("footerText").value || "";
 
-        var html = "";
+        var tbody = document.getElementById("p-issuesTableBody");
+        var rowsHtml = "";
         for (var i = 0; i < issues.length; i++) {
             var item = issues[i];
-            var photosArr = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
-            html += "<div class='doc-issue'>";
-            html += "<div class='doc-issue-head'><span>Usterka nr " + (i + 1) + "</span><span>Godz. " + item.time + " | " + item.location + "</span></div>";
-            html += "<div class='doc-issue-desc'><strong>Opis usterki:</strong> " + item.description + "</div>";
+            var photosArr = item.photos || (item.photo ? [item.photo] : []);
+            rowsHtml += "<tr>";
+            rowsHtml += "<td class='col-nr'>" + (i + 1) + "</td>";
+            rowsHtml += "<td class='col-desc'>" + escapeHtml(item.description) + "</td>";
+            rowsHtml += "<td class='col-photos'><div class='table-photos-wrap'>";
             if (photosArr.length > 0) {
-                html += "<div class='doc-issue-photos'>";
                 for (var p = 0; p < photosArr.length; p++) {
-                    html += "<img src='" + photosArr[p] + "'>";
+                    rowsHtml += "<img src='" + photosArr[p] + "'>";
                 }
-                html += "</div>";
+            } else {
+                rowsHtml += "—";
             }
-            html += "</div>";
+            rowsHtml += "</div></td>";
+            rowsHtml += "<td class='col-loc'>" + escapeHtml(item.location) + "<br><small>Godz. " + item.time + "</small></td>";
+            rowsHtml += "</tr>";
         }
-        document.getElementById("p-issuesList").innerHTML = html;
+        tbody.innerHTML = rowsHtml;
 
         saveToStorage();
-        saveSettingsToStorage();
-
-        document.getElementById("form-wrapper").style.display = "none";
+        document.getElementById("editor-wrapper").style.display = "none";
         document.getElementById("print-wrapper").style.display = "block";
         window.scrollTo(0, 0);
     }
 
     function closeProtocolPreview() {
         document.getElementById("print-wrapper").style.display = "none";
-        document.getElementById("form-wrapper").style.display = "block";
+        document.getElementById("editor-wrapper").style.display = "block";
+        window.scrollTo(0, 0);
     }
 
+    function escapeHtml(text) {
+        if (!text) return "";
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Generowanie pliku PDF
     function downloadPdfFile() {
-        var element = document.getElementById("print-document");
-        var dateStr = document.getElementById("inspectDate").value || "protokol";
-        var filename = "Protokol_kontroli_" + dateStr + ".pdf";
+        var element = document.getElementById("print-section");
+        var dateVal = document.getElementById("inspectDate").value || "protokol";
+        var filename = "Protokol_przeglad_gwarancyjny_" + dateVal + ".pdf";
 
         if (typeof html2pdf !== "undefined") {
             var opt = {
-                margin:       10,
-                filename:     filename,
-                image:        { type: "jpeg", quality: 0.85 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" }
+                margin: 10,
+                filename: filename,
+                image: { type: "jpeg", quality: 0.85 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
             };
             html2pdf().set(opt).from(element).save();
         } else {
@@ -589,58 +666,145 @@ Oddział w Białymstoku</textarea>
         }
     }
 
-    // Zapis w pamięci przeglądarki
-    function saveSettingsToStorage() {
+    // Generowanie pliku DOC / DOCX (otwieralnego bezpośrednio w Microsoft Word)
+    function downloadDocxFile() {
+        var taskName = escapeHtml(document.getElementById("taskName").value || "—");
+        var contractNo = escapeHtml(document.getElementById("contractNo").value || "—");
+        var inspectDate = escapeHtml(document.getElementById("inspectDate").value || "—");
+        var inspector = escapeHtml(document.getElementById("inspector").value || "—");
+        var footerText = escapeHtml(document.getElementById("footerText").value || "").replace(/\n/g, "<br>");
+
+        var docHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
+        docHtml += "<head><meta charset='utf-8'><title>Protokół z przeglądu gwarancyjnego</title>";
+        docHtml += "<style>";
+        docHtml += "body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; }";
+        docHtml += "table { width: 100%; border-collapse: collapse; }";
+        docHtml += ".header-tbl td { border: none; border-bottom: 2px solid #000; padding-bottom: 8px; vertical-align: middle; }";
+        docHtml += ".meta-box { border: 1.5pt solid #000; padding: 8pt; margin-top: 10pt; margin-bottom: 8pt; }";
+        docHtml += ".issues-tbl th, .issues-tbl td { border: 1pt solid #000; padding: 5pt; vertical-align: top; }";
+        docHtml += ".issues-tbl th { background-color: #f0f0f0; font-weight: bold; text-align: center; }";
+        docHtml += "</style></head><body>";
+
+        // Nagłówek z logo w lewym rogu
+        docHtml += "<table class='header-tbl'><tr>";
+        if (savedLogoBase64) {
+            docHtml += "<td style='width: 140pt;'><img src='" + savedLogoBase64 + "' width='120'></td>";
+        }
+        docHtml += "<td style='font-weight: bold; font-size: 11pt;'>Generalna Dyrekcja<br>Dróg Krajowych i Autostrad<br>Oddział w Białymstoku</td>";
+        docHtml += "</tr></table>";
+
+        docHtml += "<h2 style='text-align:center; text-transform:uppercase; font-size:14pt; margin:14pt 0;'>Protokół z przeglądu gwarancyjnego</h2>";
+
+        // Prostokąt z danymi jedno pod drugim
+        docHtml += "<div class='meta-box'>";
+        docHtml += "<p style='margin:2pt 0;'><strong>Nazwa zadania:</strong> " + taskName + "</p>";
+        docHtml += "<p style='margin:2pt 0;'><strong>Numer umowy:</strong> " + contractNo + "</p>";
+        docHtml += "<p style='margin:2pt 0;'><strong>Data kontroli:</strong> " + inspectDate + "</p>";
+        docHtml += "</div>";
+
+        // Kontrolujący pod prostokątem
+        docHtml += "<p style='margin:6pt 0 12pt 0;'><strong>Kontrolujący:</strong> " + inspector + "</p>";
+
+        // Tabela usterek: Nr usterki / Opis usterki / Zdjęcia / Lokalizacja
+        docHtml += "<table class='issues-tbl'><thead><tr>";
+        docHtml += "<th style='width:8%;'>Nr usterki</th>";
+        docHtml += "<th style='width:34%;'>Opis usterki</th>";
+        docHtml += "<th style='width:36%;'>Zdjęcia</th>";
+        docHtml += "<th style='width:22%;'>Lokalizacja</th>";
+        docHtml += "</tr></thead><tbody>";
+
+        for (var i = 0; i < issues.length; i++) {
+            var item = issues[i];
+            var photosArr = item.photos || (item.photo ? [item.photo] : []);
+            docHtml += "<tr>";
+            docHtml += "<td style='text-align:center; font-weight:bold;'>" + (i + 1) + "</td>";
+            docHtml += "<td>" + escapeHtml(item.description) + "</td>";
+            docHtml += "<td>";
+            if (photosArr.length > 0) {
+                for (var p = 0; p < photosArr.length; p++) {
+                    docHtml += "<img src='" + photosArr[p] + "' width='160' style='margin-bottom:4pt; border:1px solid #ccc;'><br>";
+                }
+            } else {
+                docHtml += "—";
+            }
+            docHtml += "</td>";
+            docHtml += "<td style='font-size:8.5pt;'>" + escapeHtml(item.location) + "<br>Godz. " + item.time + "</td>";
+            docHtml += "</tr>";
+        }
+        docHtml += "</tbody></table>";
+
+        // Podpis przedstawiciela komisji
+        docHtml += "<table style='margin-top:36pt;'><tr><td style='width:55%; border:none;'></td>";
+        docHtml += "<td style='width:45%; border:none; border-top:1pt solid #000; text-align:center; padding-top:4pt; font-size:9.5pt;'>Podpis przedstawiciela komisji</td></tr></table>";
+
+        // Stopka na dole
+        if (footerText) {
+            docHtml += "<div style='margin-top:24pt; border-top:1pt solid #666; padding-top:6pt; font-size:8pt; color:#333; text-align:center;'>" + footerText + "</div>";
+        }
+
+        docHtml += "</body></html>";
+
+        var blob = new Blob(["\ufeff", docHtml], { type: "application/msword" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        var dateVal = document.getElementById("inspectDate").value || "protokol";
+        link.href = url;
+        link.download = "Protokol_przeglad_gwarancyjny_" + dateVal + ".docx";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    // Zapis w pamięci telefonu
+    function saveToStorage() {
+        var state = {
+            taskName: document.getElementById("taskName").value,
+            contractNo: document.getElementById("contractNo").value,
+            inspector: document.getElementById("inspector").value,
+            issues: issues
+        };
         try {
-            localStorage.setItem("protokol_settings_v7", JSON.stringify({
-                logo: currentLogoBase64,
-                orgName: document.getElementById("orgName").value,
-                footerText: document.getElementById("footerText").value,
-                inspector: document.getElementById("inspector").value
-            }));
+            localStorage.setItem("protokol_gwarancyjny_v8", JSON.stringify(state));
         } catch (e) {}
     }
 
-    function saveToStorage() {
+    function saveLogoAndFooter() {
         try {
-            localStorage.setItem("protokol_data_v7", JSON.stringify({
-                taskName: document.getElementById("taskName").value,
-                contractNo: document.getElementById("contractNo").value,
-                issues: issues
-            }));
+            localStorage.setItem("protokol_logo_v8", savedLogoBase64);
+            localStorage.setItem("protokol_footer_v8", document.getElementById("footerText").value);
         } catch (e) {}
     }
 
     function loadFromStorage() {
         try {
-            var s = localStorage.getItem("protokol_settings_v7");
-            if (s) {
-                var parsedS = JSON.parse(s);
-                if (parsedS.logo) {
-                    currentLogoBase64 = parsedS.logo;
-                    updateLogoPreview();
-                }
-                if (parsedS.orgName) document.getElementById("orgName").value = parsedS.orgName;
-                if (parsedS.footerText) document.getElementById("footerText").value = parsedS.footerText;
-                if (parsedS.inspector) document.getElementById("inspector").value = parsedS.inspector;
+            var logo = localStorage.getItem("protokol_logo_v8");
+            if (logo) {
+                savedLogoBase64 = logo;
+                renderLogoPreview();
             }
-            var d = localStorage.getItem("protokol_data_v7");
-            if (d) {
-                var parsedD = JSON.parse(d);
-                document.getElementById("taskName").value = parsedD.taskName || "";
-                document.getElementById("contractNo").value = parsedD.contractNo || "";
-                issues = parsedD.issues || [];
+            var footer = localStorage.getItem("protokol_footer_v8");
+            if (footer !== null) {
+                document.getElementById("footerText").value = footer;
+            }
+            var saved = localStorage.getItem("protokol_gwarancyjny_v8") || localStorage.getItem("protokol_terenowy_v2");
+            if (saved) {
+                var state = JSON.parse(saved);
+                document.getElementById("taskName").value = state.taskName || "";
+                document.getElementById("contractNo").value = state.contractNo || "";
+                document.getElementById("inspector").value = state.inspector || "";
+                issues = state.issues || [];
                 renderIssues();
             }
         } catch (e) {}
     }
 
     function clearAll() {
-        if (confirm("Wyczyścić bieżącą listę usterek i dane zadania? (Logo i dane GDDKiA pozostaną zapisane)")) {
-            localStorage.removeItem("protokol_data_v7");
+        if (confirm("Czy na pewno wyczyścić usterki i dane zadania? (Logo i stopka pozostaną zapisane)")) {
+            localStorage.removeItem("protokol_gwarancyjny_v8");
             issues = [];
             currentPhotos = [];
-            renderPreviewGrid();
+            renderCurrentPhotos();
             document.getElementById("taskName").value = "";
             document.getElementById("contractNo").value = "";
             renderIssues();
