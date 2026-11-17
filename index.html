@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Protokół Kontroli w Terenie</title>
+    <style>
+        :root {
+            --primary: #1a56db;
+            --primary-hover: #1e429f;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #111827;
+            --border: #d1d5db;
+            --danger: #dc2626;
+            --success: #059669;
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; }
+        h1 { font-size: 1.4rem; text-align: center; color: var(--primary); margin-bottom: 20px; }
+        h2 { font-size: 1.1rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
+        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; margin-top: 12px; }
+        input[type="text"], input[type="date"], textarea {
+            width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; margin-top: 12px; transition: 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:active { background: var(--primary-hover); }
+        .btn-outline { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+        .btn-success { background: var(--success); color: white; font-size: 1.1rem; padding: 15px; }
+        .btn-danger { background: #fee2e2; color: var(--danger); width: auto; padding: 6px 12px; font-size: 0.85rem; margin-top: 0; }
+        
+        .voice-row { display: flex; gap: 8px; align-items: stretch; margin-top: 5px; }
+        .btn-mic { width: auto; padding: 0 16px; margin-top: 0; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .btn-mic.recording { background: var(--danger); color: white; animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        #preview-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 250px; object-fit: cover; }
+        .gps-status { font-size: 0.85rem; color: #4b5563; margin-top: 6px; background: #f9fafb; padding: 8px; border-radius: 6px; }
+        
+        .issue-item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa; }
+        .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .issue-img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: #eee; margin: 8px 0; }
+        .issue-meta { font-size: 0.8rem; color: #4b5563; }
+
+        /* Style wyłącznie do wydruku / PDF */
+        #print-section { display: none; }
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .no-print { display: none !important; }
+            #print-section { display: block !important; width: 100%; }
+            .print-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+            .print-header h1 { color: #000; text-align: left; margin: 0 0 10px 0; font-size: 18pt; }
+            .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10pt; }
+            .print-issue { border: 1px solid #999; page-break-inside: avoid; margin-bottom: 15px; padding: 10px; border-radius: 4px; }
+            .print-issue-top { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 8px; }
+            .print-issue-body { display: flex; gap: 15px; }
+            .print-issue-body img { max-width: 240px; max-height: 180px; object-fit: contain; border: 1px solid #ccc; }
+            .print-issue-text { flex: 1; font-size: 10pt; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 50px; page-break-inside: avoid; }
+            .sig-box { width: 42%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 9pt; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print">
+    <h1>📋 Protokół z Kontroli</h1>
+
+    <!-- DANE OGÓLNE -->
+    <div class="card">
+        <h2>1. Dane ogólne zadania</h2>
+        <label for="taskName">Nazwa zadania / obiektu:</label>
+        <input type="text" id="taskName" placeholder="np. Przebudowa ul. Polnej w Białymstoku">
+
+        <label for="contractNo">Numer umowy:</label>
+        <input type="text" id="contractNo" placeholder="np. UM/2026/14/INW">
+
+        <label for="inspectDate">Data kontroli:</label>
+        <input type="date" id="inspectDate">
+
+        <label for="inspector">Osoba kontrolująca:</label>
+        <input type="text" id="inspector" placeholder="Imię i nazwisko / funkcja">
+    </div>
+
+    <!-- DODAWANIE USTERKI -->
+    <div class="card">
+        <h2>2. Dodaj nową usterkę</h2>
+        
+        <label>Zdjęcie usterki:</label>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('cameraInput').click()">
+            📷 Zrób zdjęcie / Wybierz z galerii
+        </button>
+        <div id="preview-container"></div>
+
+        <label>Lokalizacja GPS:</label>
+        <div class="gps-status" id="gpsStatus">Kliknij przycisk poniżej lub zrób zdjęcie, aby pobrać lokalizację.</div>
+        <button type="button" class="btn btn-outline" onclick="getLocation()">📍 Pobierz aktualną lokalizację</button>
+
+        <label for="issueDesc">Opis usterki (wpisz lub podyktuj):</label>
+        <div class="voice-row">
+            <textarea id="issueDesc" placeholder="Opisz usterkę..."></textarea>
+            <button type="button" class="btn btn-mic" id="micBtn" onclick="toggleDictation()" title="Dyktuj głosowo">🎤</button>
+        </div>
+        <small style="color: #6b7280; display:block; margin-top:4px;">Wskazówka: Możesz też użyć mikrofonu na klawiaturze telefonu.</small>
+
+        <button type="button" class="btn btn-primary" onclick="addIssue()">➕ Dodaj usterkę do protokołu</button>
+    </div>
+
+    <!-- LISTA DODANYCH USTEREK -->
+    <div class="card">
+        <h2>3. Lista usterek w protokole (<span id="issueCount">0</span>)</h2>
+        <div id="issuesList">
+            <p style="color: #6b7280; text-align: center; font-size: 0.9rem;">Brak dodanych usterek.</p>
+        </div>
+    </div>
+
+    <!-- GENEROWANIE PDF -->
+    <button type="button" class="btn btn-success" onclick="prepareAndPrint()">📄 Generuj Protokół PDF / Drukuj</button>
+    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" onclick="clearAll()">🗑️ Wyczyść cały formularz</button>
+</div>
+
+<!-- SZABLON WYDRUKU PDF -->
+<div id="print-section">
+    <div class="print-header">
+        <h1>PROTOKÓŁ Z KONTROLI W TERENIE</h1>
+        <div class="print-grid">
+            <div><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
+            <div><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
+            <div><strong>Data kontroli:</strong> <span id="p-inspectDate"></span></div>
+            <div><strong>Kontrolujący:</strong> <span id="p-inspector"></span></div>
+        </div>
+    </div>
+    <div id="p-issuesList"></div>
+    <div class="signatures">
+        <div class="sig-box">Podpis osoby kontrolującej</div>
+        <div class="sig-box">Podpis przedstawiciela Wykonawcy</div>
+    </div>
+</div>
+
+<script>
+    let issues = [];
+    let currentPhotoBase64 = "";
+    let currentLocationText = "Nie pobrano lokalizacji";
+    let currentCoords = "";
+
+    // Ustaw dzisiejszą datę i wczytaj zapisane dane
+    window.onload = () => {
+        document.getElementById('inspectDate').valueAsDate = new Date();
+        loadFromStorage();
+    };
+
+    // 1. Obsługa aparatu i kompresja zdjęcia (żeby nie zapchać pamięci telefonu)
+    document.getElementById('cameraInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Automatycznie pobierz GPS przy robieniu zdjęcia
+        getLocation();
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 900; // Optymalna rozdzielczość do PDF
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+                document.getElementById('preview-container').innerHTML = 
+                    `<img src="${currentPhotoBase64}" alt="Podgląd usterki">`;
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 2. Pobieranie GPS i zamiana na adres (OpenStreetMap Nominatim)
+    function getLocation() {
+        const statusEl = document.getElementById('gpsStatus');
+        if (!navigator.geolocation) {
+statusEl.innerText = "Twoja przeglądarka nie obsługuje GPS.";
+return;
+}
+statusEl.innerText = "⏳ Pobieranie pozycji GPS...";
+navigator.geolocation.getCurrentPosition(async (position) => {
+const lat = position.coords.latitude.toFixed(6);
+const lon = position.coords.longitude.toFixed(6);
+currentCoords = ${lat}, ${lon};
+statusEl.innerHTML = 📍 Współrzędne: <strong>${currentCoords}</strong> (szukam adresu...);
+try {
+const res = await fetch(https://openstreetmap.org{lat}&lon=${lon}&zoom=18&addressdetails=1);
+const data = await res.json();
+if (data && data.display_name) {
+const addr = data.address;
+const road = addr.road || addr.pedestrian || addr.suburb || "";
+const house = addr.house_number ?  ${addr.house_number} : "";
+const city = addr.city || addr.town || addr.village || "";
+const shortAddr = [road + house, city].filter(Boolean).join(", ");
+currentLocationText = shortAddr ? ${shortAddr} (GPS: ${currentCoords}) : GPS: ${currentCoords};
+statusEl.innerHTML = ✅ Lokalizacja: <strong>${currentLocationText}</strong>;
+} else {
+currentLocationText = GPS: ${currentCoords};
+}
+} catch (err) {
+currentLocationText = GPS: ${currentCoords};
+statusEl.innerHTML = 📍 Zapisano współrzędne: <strong>${currentCoords}</strong> (brak internetu do pobrania nazwy ulicy);
+}
+}, (err) => {
+statusEl.innerText = "⚠️ Nie udało się pobrać GPS. Upewnij się, że lokalizacja w telefonie jest włączona.";
+}, { enableHighAccuracy: true, timeout: 10000 });
+}
+// 3. Dyktowanie głosowe (Web Speech API)
+let recognition;
+let isRecording = false;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+recognition = new SpeechRecognition();
+recognition.lang = 'pl-PL';
+recognition.continuous = true;
+recognition.interimResults = false;
+recognition.onresult = (event) => {
+const transcript = event.results[event.results.length - 1][0].transcript;
+const descEl = document.getElementById('issueDesc');
+descEl.value += (descEl.value ? " " : "") + transcript;
+};
+recognition.onend = () => {
+isRecording = false;
+document.getElementById('micBtn').classList.remove('recording');
+};
+}
+function toggleDictation() {
+if (!recognition) {
+alert("Twoja przeglądarka nie obsługuje przycisku dyktowania. Użyj ikony mikrofonu bezpośrednio na klawiaturze swojego telefonu!");
+return;
+}
+if (isRecording) {
+recognition.stop();
+} else {
+recognition.start();
+isRecording = true;
+document.getElementById('micBtn').classList.add('recording');
+}
+}
+// 4. Dodawanie usterki do listy
+function addIssue() {
+const desc = document.getElementById('issueDesc').value.trim();
+if (!desc && !currentPhotoBase64) {
+alert("Zrób zdjęcie lub wpisz opis usterki przed dodaniem!");
+return;
+}
+const now = new Date();
+const timeStr = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+issues.push({
+id: Date.now(),
+time: timeStr,
+photo: currentPhotoBase64,
+location: currentLocationText,
+coords: currentCoords,
+description: desc || "(Brak opisu tekstowego)"
+});
+// Reset pól usterki
+currentPhotoBase64 = "";
+document.getElementById('preview-container').innerHTML = "";
+document.getElementById('issueDesc').value = "";
+document.getElementById('cameraInput').value = "";
+saveToStorage();
+renderIssues();
+}
+function deleteIssue(id) {
+if (confirm("Usunąć tę usterkę z listy?")) {
+issues = issues.filter(i => i.id !== id);
+saveToStorage();
+renderIssues();
+}
+}
+function renderIssues() {
+const listEl = document.getElementById('issuesList');
+document.getElementById('issueCount').innerText = issues.length;
+if (issues.length === 0) {
+listEl.innerHTML = <p style="color: #6b7280; text-align: center; font-size: 0.9rem;">Brak dodanych usterek.</p>;
+return;
+}
+listEl.innerHTML = issues.map((item, index) => <div class="issue-item"> <div class="issue-header"> <strong>Usterka #${index + 1} (${item.time})</strong> <button class="btn btn-danger" onclick="deleteIssue(${item.id})">Usuń</button> </div> <div class="issue-meta">📍 ${item.location}</div> ${item.photo ?: ''} <p style="margin: 8px 0 0 0;">${item.description}</p> </div>).join('');
+}
+// 5. Przygotowanie i generowanie PDF
+function prepareAndPrint() {
+if (issues.length === 0) {
+alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu.");
+return;
+}
+document.getElementById('p-taskName').innerText = document.getElementById('taskName').value || "—";
+document.getElementById('p-contractNo').innerText = document.getElementById('contractNo').value || "—";
+document.getElementById('p-inspectDate').innerText = document.getElementById('inspectDate').value || "—";
+document.getElementById('p-inspector').innerText = document.getElementById('inspector').value || "—";
+const pList = document.getElementById('p-issuesList');
+pList.innerHTML = issues.map((item, idx) => <div class="print-issue"> <div class="print-issue-top"> <span>Usterka nr ${idx + 1}</span> <span>Godz. ${item.time} | ${item.location}</span> </div> <div class="print-issue-body"> ${item.photo ?: ''} <div class="print-issue-text"> <strong>Opis usterki:</strong><br> ${item.description} </div> </div> </div>).join('');
+saveToStorage();
+window.print();
+}
+// Zapis w pamięci przeglądarki (chroni przed przypadkowym odświeżeniem strony)
+function saveToStorage() {
+const state = {
+taskName: document.getElementById('taskName').value,
+contractNo: document.getElementById('contractNo').value,
+inspector: document.getElementById('inspector').value,
+issues: issues
+};
+try {
+localStorage.setItem('protokol_terenowy_v1', JSON.stringify(state));
+} catch (e) {
+console.warn("Brak miejsca w localStorage na kolejne zdjęcia.");
+}
+}
+function loadFromStorage() {
+const saved = localStorage.getItem('protokol_terenowy_v1');
+if (saved) {
+const state = JSON.parse(saved);
+document.getElementById('taskName').value = state.taskName || "";
+document.getElementById('contractNo').value = state.contractNo || "";
+document.getElementById('inspector').value = state.inspector || "";
+issues = state.issues || [];
+renderIssues();
+}
+}
+function clearAll() {
+if (confirm("Czy na pewno wyczyścić wszystkie dane i zacząć nowy protokół?")) {
+localStorage.removeItem('protokol_terenowy_v1');
+issues = [];
+document.getElementById('taskName').value = "";
+document.getElementById('contractNo').value = "";
+renderIssues();
+}
+}
