@@ -28,7 +28,7 @@
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
-            cursor: pointer; margin-top: 12px; transition: 0.2s;
+            cursor: pointer; margin-top: 10px; transition: 0.2s;
         }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:active { background: var(--primary-hover); }
@@ -36,14 +36,15 @@
         .btn-success { background: var(--success); color: white; font-size: 1.1rem; padding: 15px; }
         .btn-danger { background: #fee2e2; color: var(--danger); width: auto; padding: 6px 12px; font-size: 0.85rem; margin-top: 0; }
         
+        .photo-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .voice-row { display: flex; gap: 8px; align-items: stretch; margin-top: 5px; }
         .btn-mic { width: auto; padding: 0 16px; margin-top: 0; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
         .btn-mic.recording { background: var(--danger); color: white; animation: pulse 1.5s infinite; }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        #preview-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 250px; object-fit: cover; }
-        .gps-status { font-size: 0.85rem; color: #4b5563; margin-top: 6px; background: #f9fafb; padding: 8px; border-radius: 6px; }
+        #preview-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 250px; object-fit: cover; border: 1px solid var(--border); }
+        .gps-status { font-size: 0.85rem; color: #4b5563; margin-top: 6px; background: #f9fafb; padding: 8px; border-radius: 6px; border: 1px solid #e5e7eb; }
         
         .issue-item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa; }
         .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -95,10 +96,18 @@
         <h2>2. Dodaj nową usterkę</h2>
         
         <label>Zdjęcie usterki:</label>
+        <!-- Ukryte pola: jedno wymusza aparat, drugie otwiera galerię -->
         <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
-        <button type="button" class="btn btn-outline" onclick="document.getElementById('cameraInput').click()">
-            📷 Zrób zdjęcie / Wybierz z galerii
-        </button>
+        <input type="file" id="galleryInput" accept="image/*" style="display:none">
+        
+        <div class="photo-buttons">
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('cameraInput').click()">
+                📷 Zrób zdjęcie
+            </button>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('galleryInput').click()">
+                🖼️ Z galerii
+            </button>
+        </div>
         <div id="preview-container"></div>
 
         <label>Lokalizacja GPS:</label>
@@ -110,7 +119,7 @@
             <textarea id="issueDesc" placeholder="Opisz usterkę..."></textarea>
             <button type="button" class="btn btn-mic" id="micBtn" onclick="toggleDictation()" title="Dyktuj głosowo">🎤</button>
         </div>
-        <small style="color: #6b7280; display:block; margin-top:4px;">Wskazówka: Możesz też użyć mikrofonu na klawiaturze telefonu.</small>
+        <small style="color: #6b7280; display:block; margin-top:4px;">Wskazówka: Możesz też użyć ikony mikrofonu na klawiaturze telefonu.</small>
 
         <button type="button" class="btn btn-primary" onclick="addIssue()">➕ Dodaj usterkę do protokołu</button>
     </div>
@@ -152,46 +161,53 @@
     let currentLocationText = "Nie pobrano lokalizacji";
     let currentCoords = "";
 
-    // Ustaw dzisiejszą datę i wczytaj zapisane dane
     window.onload = () => {
         document.getElementById('inspectDate').valueAsDate = new Date();
         loadFromStorage();
     };
 
-    // 1. Obsługa aparatu i kompresja zdjęcia (żeby nie zapchać pamięci telefonu)
-    document.getElementById('cameraInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
+    // 1. Naprawiona obsługa aparatu i galerii z kompresją zdjęcia
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
         if (!file) return;
 
-        // Automatycznie pobierz GPS przy robieniu zdjęcia
+        const previewEl = document.getElementById('preview-container');
+        previewEl.innerHTML = `<p style="font-size:0.85rem; color:#4b5563;">⏳ Przetwarzanie zdjęcia...</p>`;
+
+        // Automatycznie pobierz GPS przy dodaniu zdjęcia
         getLocation();
 
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function(e) {
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 900; // Optymalna rozdzielczość do PDF
-                const scaleSize = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scaleSize;
+                const MAX_WIDTH = 900;
+                let width = img.width;
+                let height = img.height;
 
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.75);
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
+                }
 
-                document.getElementById('preview-container').innerHTML = 
-                    `<img src="${currentPhotoBase64}" alt="Podgląd usterki">`;
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-
-    // 2. Pobieranie GPS i zamiana na adres (OpenStreetMap Nominatim)
-    function getLocation() {
-        const statusEl = document.getElementById('gpsStatus');
-        if (!navigator.geolocation) {
+                canvas.width = width;
+                canvas.height = height;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, width, height);
+currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.75);
+previewEl.innerHTML = <img src="${currentPhotoBase64}" alt="Podgląd usterki">;
+};
+img.src = e.target.result;
+};
+reader.readAsDataURL(file);
+}
+document.getElementById('cameraInput').addEventListener('change', handleImageUpload);
+document.getElementById('galleryInput').addEventListener('change', handleImageUpload);
+// 2. Pobieranie GPS i zamiana na adres
+function getLocation() {
+const statusEl = document.getElementById('gpsStatus');
+if (!navigator.geolocation) {
 statusEl.innerText = "Twoja przeglądarka nie obsługuje GPS.";
 return;
 }
@@ -217,13 +233,13 @@ currentLocationText = GPS: ${currentCoords};
 }
 } catch (err) {
 currentLocationText = GPS: ${currentCoords};
-statusEl.innerHTML = 📍 Zapisano współrzędne: <strong>${currentCoords}</strong> (brak internetu do pobrania nazwy ulicy);
+statusEl.innerHTML = 📍 Zapisano współrzędne: <strong>${currentCoords}</strong>;
 }
 }, (err) => {
 statusEl.innerText = "⚠️ Nie udało się pobrać GPS. Upewnij się, że lokalizacja w telefonie jest włączona.";
 }, { enableHighAccuracy: true, timeout: 10000 });
 }
-// 3. Dyktowanie głosowe (Web Speech API)
+// 3. Dyktowanie głosowe
 let recognition;
 let isRecording = false;
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -277,6 +293,7 @@ currentPhotoBase64 = "";
 document.getElementById('preview-container').innerHTML = "";
 document.getElementById('issueDesc').value = "";
 document.getElementById('cameraInput').value = "";
+document.getElementById('galleryInput').value = "";
 saveToStorage();
 renderIssues();
 }
@@ -311,7 +328,6 @@ pList.innerHTML = issues.map((item, idx) => <div class="print-issue"> <div class
 saveToStorage();
 window.print();
 }
-// Zapis w pamięci przeglądarki (chroni przed przypadkowym odświeżeniem strony)
 function saveToStorage() {
 const state = {
 taskName: document.getElementById('taskName').value,
