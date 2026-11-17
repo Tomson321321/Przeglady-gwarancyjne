@@ -20,38 +20,40 @@
         h1 { font-size: 1.4rem; text-align: center; color: var(--primary); margin-bottom: 20px; }
         h2 { font-size: 1.1rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-        label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; margin-top: 12px; }
+        label.field-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; margin-top: 12px; }
         input[type="text"], input[type="date"], textarea {
             width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff;
         }
-        textarea { resize: vertical; min-height: 80px; }
+        textarea { resize: vertical; min-height: 85px; }
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
-            cursor: pointer; margin-top: 10px; transition: 0.2s;
+            cursor: pointer; margin-top: 10px; text-align: center; user-select: none;
         }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:active { background: var(--primary-hover); }
         .btn-outline { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+        .btn-outline:active { background: #dbeafe; }
         .btn-success { background: var(--success); color: white; font-size: 1.1rem; padding: 15px; }
         .btn-danger { background: #fee2e2; color: var(--danger); width: auto; padding: 6px 12px; font-size: 0.85rem; margin-top: 0; }
         
         .photo-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .voice-row { display: flex; gap: 8px; align-items: stretch; margin-top: 5px; }
-        .btn-mic { width: auto; padding: 0 16px; margin-top: 0; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-        .btn-mic.recording { background: var(--danger); color: white; animation: pulse 1.5s infinite; }
+        .file-input-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
         
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .voice-row { display: flex; gap: 8px; align-items: stretch; margin-top: 5px; }
+        .btn-mic { width: auto; min-width: 54px; padding: 0 14px; margin-top: 0; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 1.3rem; }
+        .btn-mic.recording { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.2s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        #preview-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 250px; object-fit: cover; border: 1px solid var(--border); }
-        .gps-status { font-size: 0.85rem; color: #4b5563; margin-top: 6px; background: #f9fafb; padding: 8px; border-radius: 6px; border: 1px solid #e5e7eb; }
+        #preview-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 260px; object-fit: cover; border: 1px solid var(--border); display: block; }
+        .status-box { font-size: 0.85rem; color: #374151; margin-top: 6px; background: #f9fafb; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.4; }
         
         .issue-item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa; }
         .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .issue-img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: #eee; margin: 8px 0; }
-        .issue-meta { font-size: 0.8rem; color: #4b5563; }
+        .issue-img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: #eee; margin: 8px 0; display: block; }
+        .issue-meta { font-size: 0.82rem; color: #4b5563; }
 
-        /* Style wyłącznie do wydruku / PDF */
         #print-section { display: none; }
         @media print {
             body { background: white; padding: 0; margin: 0; }
@@ -75,56 +77,50 @@
 <div class="no-print">
     <h1>📋 Protokół z Kontroli</h1>
 
-    <!-- DANE OGÓLNE -->
     <div class="card">
         <h2>1. Dane ogólne zadania</h2>
-        <label for="taskName">Nazwa zadania / obiektu:</label>
+        <label class="field-label" for="taskName">Nazwa zadania / obiektu:</label>
         <input type="text" id="taskName" placeholder="np. Przebudowa ul. Polnej w Białymstoku">
 
-        <label for="contractNo">Numer umowy:</label>
+        <label class="field-label" for="contractNo">Numer umowy:</label>
         <input type="text" id="contractNo" placeholder="np. UM/2026/14/INW">
 
-        <label for="inspectDate">Data kontroli:</label>
+        <label class="field-label" for="inspectDate">Data kontroli:</label>
         <input type="date" id="inspectDate">
 
-        <label for="inspector">Osoba kontrolująca:</label>
+        <label class="field-label" for="inspector">Osoba kontrolująca:</label>
         <input type="text" id="inspector" placeholder="Imię i nazwisko / funkcja">
     </div>
 
-    <!-- DODAWANIE USTERKI -->
     <div class="card">
         <h2>2. Dodaj nową usterkę</h2>
         
-        <label>Zdjęcie usterki:</label>
-        <!-- Ukryte pola: jedno wymusza aparat, drugie otwiera galerię -->
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
-        <input type="file" id="galleryInput" accept="image/*" style="display:none">
+        <label class="field-label">Zdjęcie usterki:</label>
+        <input type="file" id="cameraInput" class="file-input-hidden" accept="image/*" capture="environment">
+        <input type="file" id="galleryInput" class="file-input-hidden" accept="image/*">
         
         <div class="photo-buttons">
-            <button type="button" class="btn btn-outline" onclick="document.getElementById('cameraInput').click()">
-                📷 Zrób zdjęcie
-            </button>
-            <button type="button" class="btn btn-outline" onclick="document.getElementById('galleryInput').click()">
-                🖼️ Z galerii
-            </button>
+            <label for="cameraInput" class="btn btn-outline">📷 Zrób zdjęcie</label>
+            <label for="galleryInput" class="btn btn-outline">🖼️ Z galerii</label>
         </div>
         <div id="preview-container"></div>
 
-        <label>Lokalizacja GPS:</label>
-        <div class="gps-status" id="gpsStatus">Kliknij przycisk poniżej lub zrób zdjęcie, aby pobrać lokalizację.</div>
-        <button type="button" class="btn btn-outline" onclick="getLocation()">📍 Pobierz aktualną lokalizację</button>
+        <label class="field-label">Lokalizacja GPS:</label>
+        <div class="status-box" id="gpsStatus">Kliknij przycisk poniżej lub zrób zdjęcie, aby pobrać lokalizację.</div>
+        <button type="button" class="btn btn-outline" id="btnGps">📍 Pobierz aktualną lokalizację</button>
 
-        <label for="issueDesc">Opis usterki (wpisz lub podyktuj):</label>
+        <label class="field-label" for="issueDesc">Opis usterki (wpisz lub podyktuj):</label>
         <div class="voice-row">
             <textarea id="issueDesc" placeholder="Opisz usterkę..."></textarea>
-            <button type="button" class="btn btn-mic" id="micBtn" onclick="toggleDictation()" title="Dyktuj głosowo">🎤</button>
+            <button type="button" class="btn btn-mic" id="micBtn" title="Dyktuj głosowo">🎤</button>
         </div>
-        <small style="color: #6b7280; display:block; margin-top:4px;">Wskazówka: Możesz też użyć ikony mikrofonu na klawiaturze telefonu.</small>
+        <div id="micStatus" style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">
+            Kliknij 🎤 aby dyktować lub użyj mikrofonu na klawiaturze telefonu.
+        </div>
 
-        <button type="button" class="btn btn-primary" onclick="addIssue()">➕ Dodaj usterkę do protokołu</button>
+        <button type="button" class="btn btn-primary" id="btnAddIssue">➕ Dodaj usterkę do protokołu</button>
     </div>
 
-    <!-- LISTA DODANYCH USTEREK -->
     <div class="card">
         <h2>3. Lista usterek w protokole (<span id="issueCount">0</span>)</h2>
         <div id="issuesList">
@@ -132,12 +128,10 @@
         </div>
     </div>
 
-    <!-- GENEROWANIE PDF -->
-    <button type="button" class="btn btn-success" onclick="prepareAndPrint()">📄 Generuj Protokół PDF / Drukuj</button>
-    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" onclick="clearAll()">🗑️ Wyczyść cały formularz</button>
+    <button type="button" class="btn btn-success" id="btnPrint">📄 Generuj Protokół PDF / Drukuj</button>
+    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" id="btnClear">🗑️ Wyczyść cały formularz</button>
 </div>
 
-<!-- SZABLON WYDRUKU PDF -->
 <div id="print-section">
     <div class="print-header">
         <h1>PROTOKÓŁ Z KONTROLI W TERENIE</h1>
@@ -156,208 +150,293 @@
 </div>
 
 <script>
-    let issues = [];
-    let currentPhotoBase64 = "";
-    let currentLocationText = "Nie pobrano lokalizacji";
-    let currentCoords = "";
+    var issues = [];
+    var currentPhotoBase64 = "";
+    var currentLocationText = "Nie pobrano lokalizacji";
+    var currentCoords = "";
 
-    window.onload = () => {
-        document.getElementById('inspectDate').valueAsDate = new Date();
+    document.addEventListener("DOMContentLoaded", function() {
+        var dateInput = document.getElementById("inspectDate");
+        if (dateInput) {
+            dateInput.valueAsDate = new Date();
+        }
         loadFromStorage();
-    };
 
-    // 1. Naprawiona obsługa aparatu i galerii z kompresją zdjęcia
+        document.getElementById("cameraInput").addEventListener("change", handleImageUpload);
+        document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
+        document.getElementById("btnGps").addEventListener("click", getLocation);
+        document.getElementById("micBtn").addEventListener("click", toggleDictation);
+        document.getElementById("btnAddIssue").addEventListener("click", addIssue);
+        document.getElementById("btnPrint").addEventListener("click", prepareAndPrint);
+        document.getElementById("btnClear").addEventListener("click", clearAll);
+    });
+
     function handleImageUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+        var files = event.target.files;
+        if (!files || files.length === 0) return;
 
-        const previewEl = document.getElementById('preview-container');
-        previewEl.innerHTML = `<p style="font-size:0.85rem; color:#4b5563;">⏳ Przetwarzanie zdjęcia...</p>`;
+        var file = files[0];
+        var previewEl = document.getElementById("preview-container");
+        previewEl.innerHTML = "<p style='font-size:0.85rem; color:#1a56db;'>⏳ Wczytywanie i zmniejszanie zdjęcia...</p>";
 
-        // Automatycznie pobierz GPS przy dodaniu zdjęcia
         getLocation();
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 900;
-                let width = img.width;
-                let height = img.height;
+        var objectUrl = URL.createObjectURL(file);
+        var img = new Image();
 
-                if (width > MAX_WIDTH) {
-                    height = Math.round((height * MAX_WIDTH) / width);
-                    width = MAX_WIDTH;
-                }
+        img.onload = function() {
+            var canvas = document.createElement("canvas");
+            var MAX_WIDTH = 850;
+            var width = img.width;
+            var height = img.height;
 
-                canvas.width = width;
-                canvas.height = height;
-const ctx = canvas.getContext('2d');
-ctx.drawImage(img, 0, 0, width, height);
-currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.75);
-previewEl.innerHTML = <img src="${currentPhotoBase64}" alt="Podgląd usterki">;
-};
-img.src = e.target.result;
-};
-reader.readAsDataURL(file);
-}
-document.getElementById('cameraInput').addEventListener('change', handleImageUpload);
-document.getElementById('galleryInput').addEventListener('change', handleImageUpload);
-// 2. Pobieranie GPS i zamiana na adres
-function getLocation() {
-const statusEl = document.getElementById('gpsStatus');
-if (!navigator.geolocation) {
-statusEl.innerText = "Twoja przeglądarka nie obsługuje GPS.";
-return;
-}
-statusEl.innerText = "⏳ Pobieranie pozycji GPS...";
-navigator.geolocation.getCurrentPosition(async (position) => {
-const lat = position.coords.latitude.toFixed(6);
-const lon = position.coords.longitude.toFixed(6);
-currentCoords = ${lat}, ${lon};
-statusEl.innerHTML = 📍 Współrzędne: <strong>${currentCoords}</strong> (szukam adresu...);
-try {
-const res = await fetch(https://openstreetmap.org{lat}&lon=${lon}&zoom=18&addressdetails=1);
-const data = await res.json();
-if (data && data.display_name) {
-const addr = data.address;
-const road = addr.road || addr.pedestrian || addr.suburb || "";
-const house = addr.house_number ?  ${addr.house_number} : "";
-const city = addr.city || addr.town || addr.village || "";
-const shortAddr = [road + house, city].filter(Boolean).join(", ");
-currentLocationText = shortAddr ? ${shortAddr} (GPS: ${currentCoords}) : GPS: ${currentCoords};
-statusEl.innerHTML = ✅ Lokalizacja: <strong>${currentLocationText}</strong>;
-} else {
-currentLocationText = GPS: ${currentCoords};
-}
-} catch (err) {
-currentLocationText = GPS: ${currentCoords};
-statusEl.innerHTML = 📍 Zapisano współrzędne: <strong>${currentCoords}</strong>;
-}
-}, (err) => {
-statusEl.innerText = "⚠️ Nie udało się pobrać GPS. Upewnij się, że lokalizacja w telefonie jest włączona.";
-}, { enableHighAccuracy: true, timeout: 10000 });
-}
-// 3. Dyktowanie głosowe
-let recognition;
-let isRecording = false;
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-recognition = new SpeechRecognition();
-recognition.lang = 'pl-PL';
-recognition.continuous = true;
-recognition.interimResults = false;
-recognition.onresult = (event) => {
-const transcript = event.results[event.results.length - 1][0].transcript;
-const descEl = document.getElementById('issueDesc');
-descEl.value += (descEl.value ? " " : "") + transcript;
-};
-recognition.onend = () => {
-isRecording = false;
-document.getElementById('micBtn').classList.remove('recording');
-};
-}
-function toggleDictation() {
-if (!recognition) {
-alert("Twoja przeglądarka nie obsługuje przycisku dyktowania. Użyj ikony mikrofonu bezpośrednio na klawiaturze swojego telefonu!");
-return;
-}
-if (isRecording) {
-recognition.stop();
-} else {
-recognition.start();
-isRecording = true;
-document.getElementById('micBtn').classList.add('recording');
-}
-}
-// 4. Dodawanie usterki do listy
-function addIssue() {
-const desc = document.getElementById('issueDesc').value.trim();
-if (!desc && !currentPhotoBase64) {
-alert("Zrób zdjęcie lub wpisz opis usterki przed dodaniem!");
-return;
-}
-const now = new Date();
-const timeStr = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-issues.push({
-id: Date.now(),
-time: timeStr,
-photo: currentPhotoBase64,
-location: currentLocationText,
-coords: currentCoords,
-description: desc || "(Brak opisu tekstowego)"
-});
-// Reset pól usterki
-currentPhotoBase64 = "";
-document.getElementById('preview-container').innerHTML = "";
-document.getElementById('issueDesc').value = "";
-document.getElementById('cameraInput').value = "";
-document.getElementById('galleryInput').value = "";
-saveToStorage();
-renderIssues();
-}
-function deleteIssue(id) {
-if (confirm("Usunąć tę usterkę z listy?")) {
-issues = issues.filter(i => i.id !== id);
-saveToStorage();
-renderIssues();
-}
-}
-function renderIssues() {
-const listEl = document.getElementById('issuesList');
-document.getElementById('issueCount').innerText = issues.length;
-if (issues.length === 0) {
-listEl.innerHTML = <p style="color: #6b7280; text-align: center; font-size: 0.9rem;">Brak dodanych usterek.</p>;
-return;
-}
-listEl.innerHTML = issues.map((item, index) => <div class="issue-item"> <div class="issue-header"> <strong>Usterka #${index + 1} (${item.time})</strong> <button class="btn btn-danger" onclick="deleteIssue(${item.id})">Usuń</button> </div> <div class="issue-meta">📍 ${item.location}</div> ${item.photo ?: ''} <p style="margin: 8px 0 0 0;">${item.description}</p> </div>).join('');
-}
-// 5. Przygotowanie i generowanie PDF
-function prepareAndPrint() {
-if (issues.length === 0) {
-alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu.");
-return;
-}
-document.getElementById('p-taskName').innerText = document.getElementById('taskName').value || "—";
-document.getElementById('p-contractNo').innerText = document.getElementById('contractNo').value || "—";
-document.getElementById('p-inspectDate').innerText = document.getElementById('inspectDate').value || "—";
-document.getElementById('p-inspector').innerText = document.getElementById('inspector').value || "—";
-const pList = document.getElementById('p-issuesList');
-pList.innerHTML = issues.map((item, idx) => <div class="print-issue"> <div class="print-issue-top"> <span>Usterka nr ${idx + 1}</span> <span>Godz. ${item.time} | ${item.location}</span> </div> <div class="print-issue-body"> ${item.photo ?: ''} <div class="print-issue-text"> <strong>Opis usterki:</strong><br> ${item.description} </div> </div> </div>).join('');
-saveToStorage();
-window.print();
-}
-function saveToStorage() {
-const state = {
-taskName: document.getElementById('taskName').value,
-contractNo: document.getElementById('contractNo').value,
-inspector: document.getElementById('inspector').value,
-issues: issues
-};
-try {
-localStorage.setItem('protokol_terenowy_v1', JSON.stringify(state));
-} catch (e) {
-console.warn("Brak miejsca w localStorage na kolejne zdjęcia.");
-}
-}
-function loadFromStorage() {
-const saved = localStorage.getItem('protokol_terenowy_v1');
-if (saved) {
-const state = JSON.parse(saved);
-document.getElementById('taskName').value = state.taskName || "";
-document.getElementById('contractNo').value = state.contractNo || "";
-document.getElementById('inspector').value = state.inspector || "";
-issues = state.issues || [];
-renderIssues();
-}
-}
-function clearAll() {
-if (confirm("Czy na pewno wyczyścić wszystkie dane i zacząć nowy protokół?")) {
-localStorage.removeItem('protokol_terenowy_v1');
-issues = [];
-document.getElementById('taskName').value = "";
-document.getElementById('contractNo').value = "";
-renderIssues();
-}
-}
+            if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            currentPhotoBase64 = canvas.toDataURL("image/jpeg", 0.72);
+
+            previewEl.innerHTML = "<img src='" + currentPhotoBase64 + "' alt='Podgląd usterki'>";
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.onerror = function() {
+            previewEl.innerHTML = "<p style='color:#dc2626; font-size:0.85rem;'>⚠️ Nie udało się wczytać tego zdjęcia. Spróbuj ponownie.</p>";
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.src = objectUrl;
+    }
+
+    function getLocation() {
+        var statusEl = document.getElementById("gpsStatus");
+        if (!navigator.geolocation) {
+            statusEl.innerText = "⚠️ Twoja przeglądarka nie obsługuje GPS.";
+            return;
+        }
+        statusEl.innerHTML = "⏳ <strong>Szukam sygnału GPS...</strong> (upewnij się, że lokalizacja w telefonie jest włączona)";
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                var lat = position.coords.latitude.toFixed(6);
+                var lon = position.coords.longitude.toFixed(6);
+                currentCoords = lat + ", " + lon;
+                currentLocationText = "GPS: " + currentCoords;
+                statusEl.innerHTML = "📍 Współrzędne: <strong>" + currentCoords + "</strong> (pobieram nazwę ulicy...)";
+
+                fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&addressdetails=1")
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data && data.address) {
+                            var addr = data.address;
+                            var road = addr.road || addr.pedestrian || addr.suburb || "";
+                            var house = addr.house_number ? (" " + addr.house_number) : "";
+                            var city = addr.city || addr.town || addr.village || "";
+                            var shortAddr = [road + house, city].filter(Boolean).join(", ");
+                            if (shortAddr) {
+                                currentLocationText = shortAddr + " (GPS: " + currentCoords + ")";
+                            }
+                        }
+                        statusEl.innerHTML = "✅ Lokalizacja: <strong>" + currentLocationText + "</strong>";
+                    })
+                    .catch(function() {
+                        statusEl.innerHTML = "📍 Zapisano współrzędne: <strong>" + currentCoords + "</strong>";
+                    });
+            },
+            function(err) {
+                var msg = "⚠️ Błąd GPS: ";
+                if (err.code === 1) msg += "Odmówiono dostępu do lokalizacji. Zezwól na lokalizację w ustawieniach przeglądarki.";
+                else if (err.code === 2) msg += "Brak sygnału GPS.";
+                else msg += "Przekroczono czas oczekiwania.";
+                statusEl.innerText = msg;
+            },
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+        );
+    }
+
+    var recognition = null;
+    var isRecording = false;
+
+    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = "pl-PL";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = function() {
+            isRecording = true;
+            document.getElementById("micBtn").classList.add("recording");
+            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz do telefonu!</strong>";
+        };
+
+        recognition.onresult = function(event) {
+            var transcript = event.results[0][0].transcript;
+            var descEl = document.getElementById("issueDesc");
+            descEl.value += (descEl.value ? " " : "") + transcript;
+        };
+
+        recognition.onerror = function(event) {
+            document.getElementById("micStatus").innerText = "⚠️ Błąd mikrofonu (" + event.error + "). Użyj ikony mikrofonu na klawiaturze telefonu.";
+        };
+
+        recognition.onend = function() {
+            isRecording = false;
+            document.getElementById("micBtn").classList.remove("recording");
+            document.getElementById("micStatus").innerText = "Kliknij 🎤 aby dyktować dalej lub użyj mikrofonu na klawiaturze.";
+        };
+    }
+
+    function toggleDictation() {
+        if (!recognition) {
+            alert("Twoja przeglądarka (np. Safari na iPhone) blokuje ten przycisk. Kliknij w pole opisu i naciśnij ikonę mikrofonu bezpośrednio na klawiaturze telefonu!");
+            return;
+        }
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            try {
+                recognition.start();
+            } catch (e) {
+                alert("Mikrofon jest już aktywny lub zablokowany przez przeglądarkę.");
+            }
+        }
+    }
+
+    function addIssue() {
+        var desc = document.getElementById("issueDesc").value.trim();
+        if (!desc && !currentPhotoBase64) {
+            alert("Zrób zdjęcie lub wpisz opis usterki przed kliknięciem Dodaj!");
+            return;
+        }
+
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+
+        issues.push({
+            id: Date.now(),
+            time: timeStr,
+            photo: currentPhotoBase64,
+            location: currentLocationText,
+            description: desc || "(Brak opisu tekstowego)"
+        });
+
+        currentPhotoBase64 = "";
+        document.getElementById("preview-container").innerHTML = "";
+        document.getElementById("issueDesc").value = "";
+        document.getElementById("cameraInput").value = "";
+        document.getElementById("galleryInput").value = "";
+
+        saveToStorage();
+        renderIssues();
+    }
+
+    function deleteIssue(id) {
+        if (confirm("Usunąć tę usterkę z listy?")) {
+            issues = issues.filter(function(i) { return i.id !== id; });
+            saveToStorage();
+            renderIssues();
+        }
+    }
+
+    function renderIssues() {
+        var listEl = document.getElementById("issuesList");
+        document.getElementById("issueCount").innerText = issues.length;
+
+        if (issues.length === 0) {
+            listEl.innerHTML = "<p style='color: #6b7280; text-align: center; font-size: 0.9rem;'>Brak dodanych usterek.</p>";
+            return;
+        }
+
+        var html = "";
+        for (var i = 0; i < issues.length; i++) {
+            var item = issues[i];
+            html += "<div class='issue-item'>";
+            html += "<div class='issue-header'><strong>Usterka #" + (i + 1) + " (" + item.time + ")</strong>";
+            html += "<button type='button' class='btn btn-danger' onclick='deleteIssue(" + item.id + ")'>Usuń</button></div>";
+            html += "<div class='issue-meta'>📍 " + item.location + "</div>";
+            if (item.photo) {
+                html += "<img src='" + item.photo + "' class='issue-img'>";
+            }
+            html += "<p style='margin: 8px 0 0 0;'>" + item.description + "</p>";
+            html += "</div>";
+        }
+        listEl.innerHTML = html;
+    }
+
+    function prepareAndPrint() {
+        if (issues.length === 0) {
+            alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu.");
+            return;
+        }
+
+        document.getElementById("p-taskName").innerText = document.getElementById("taskName").value || "—";
+        document.getElementById("p-contractNo").innerText = document.getElementById("contractNo").value || "—";
+        document.getElementById("p-inspectDate").innerText = document.getElementById("inspectDate").value || "—";
+        document.getElementById("p-inspector").innerText = document.getElementById("inspector").value || "—";
+
+        var html = "";
+        for (var i = 0; i < issues.length; i++) {
+            var item = issues[i];
+            html += "<div class='print-issue'>";
+            html += "<div class='print-issue-top'><span>Usterka nr " + (i + 1) + "</span><span>Godz. " + item.time + " | " + item.location + "</span></div>";
+            html += "<div class='print-issue-body'>";
+            if (item.photo) {
+                html += "<img src='" + item.photo + "'>";
+            }
+            html += "<div class='print-issue-text'><strong>Opis usterki:</strong><br>" + item.description + "</div>";
+            html += "</div></div>";
+        }
+        document.getElementById("p-issuesList").innerHTML = html;
+
+        saveToStorage();
+        window.print();
+    }
+
+    function saveToStorage() {
+        var state = {
+            taskName: document.getElementById("taskName").value,
+            contractNo: document.getElementById("contractNo").value,
+            inspector: document.getElementById("inspector").value,
+            issues: issues
+        };
+        try {
+            localStorage.setItem("protokol_terenowy_v2", JSON.stringify(state));
+        } catch (e) {
+            console.warn("Pamięć podręczna pełna.");
+        }
+    }
+
+    function loadFromStorage() {
+        var saved = localStorage.getItem("protokol_terenowy_v2");
+        if (saved) {
+            try {
+                var state = JSON.parse(saved);
+                document.getElementById("taskName").value = state.taskName || "";
+                document.getElementById("contractNo").value = state.contractNo || "";
+                document.getElementById("inspector").value = state.inspector || "";
+                issues = state.issues || [];
+                renderIssues();
+            } catch (e) {}
+        }
+    }
+
+    function clearAll() {
+        if (confirm("Czy na pewno wyczyścić wszystkie dane i zacząć nowy protokół?")) {
+            localStorage.removeItem("protokol_terenowy_v2");
+            issues = [];
+            document.getElementById("taskName").value = "";
+            document.getElementById("contractNo").value = "";
+            renderIssues();
+        }
+    }
+</script>
+
+</body>
+</html>
