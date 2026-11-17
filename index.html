@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Protokół Kontroli w Terenie</title>
+    <title>Protokół Kontroli w Terenie - GDDKiA</title>
     <style>
         :root {
             --primary: #1a56db;
@@ -17,14 +17,14 @@
         }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; }
-        h1 { font-size: 1.4rem; text-align: center; color: var(--primary); margin-bottom: 20px; }
-        h2 { font-size: 1.1rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
+        h1 { font-size: 1.35rem; text-align: center; color: var(--primary); margin-bottom: 20px; }
+        h2 { font-size: 1.05rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         label.field-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; margin-top: 12px; }
         input[type="text"], input[type="date"], textarea {
             width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff;
         }
-        textarea { resize: vertical; min-height: 85px; }
+        textarea { resize: vertical; min-height: 80px; }
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
@@ -46,6 +46,8 @@
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
+        #logo-preview-box { margin-top: 10px; display: flex; align-items: center; gap: 12px; }
+        #logo-preview-box img { max-height: 55px; max-width: 180px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; background: #fff; }
         #preview-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 260px; object-fit: cover; border: 1px solid var(--border); display: block; }
         .status-box { font-size: 0.85rem; color: #374151; margin-top: 6px; background: #f9fafb; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.4; }
         
@@ -54,21 +56,58 @@
         .issue-img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: #eee; margin: 8px 0; display: block; }
         .issue-meta { font-size: 0.82rem; color: #4b5563; }
 
+        /* Style wyłącznie do wydruku / PDF */
         #print-section { display: none; }
         @media print {
+            @page { margin: 15mm 15mm 22mm 15mm; }
             body { background: white; padding: 0; margin: 0; }
             .no-print { display: none !important; }
             #print-section { display: block !important; width: 100%; }
-            .print-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-            .print-header h1 { color: #000; text-align: left; margin: 0 0 10px 0; font-size: 18pt; }
-            .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10pt; }
-            .print-issue { border: 1px solid #999; page-break-inside: avoid; margin-bottom: 15px; padding: 10px; border-radius: 4px; }
-            .print-issue-top { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 8px; }
+            
+            .print-top-brand {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 12px;
+                margin-bottom: 15px;
+            }
+            .print-logo {
+                max-height: 60px;
+                max-width: 180px;
+                object-fit: contain;
+            }
+            .print-org-name {
+                font-size: 11pt;
+                font-weight: bold;
+                line-height: 1.3;
+                color: #000;
+            }
+            .print-header { margin-bottom: 18px; }
+            .print-header h1 { color: #000; text-align: center; margin: 0 0 14px 0; font-size: 16pt; text-transform: uppercase; }
+            .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10pt; background: #f9fafb; padding: 10px; border: 1px solid #ccc; }
+            
+            .print-issue { border: 1px solid #999; page-break-inside: avoid; margin-bottom: 14px; padding: 10px; border-radius: 4px; }
+            .print-issue-top { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 8px; font-size: 9.5pt; }
             .print-issue-body { display: flex; gap: 15px; }
-            .print-issue-body img { max-width: 240px; max-height: 180px; object-fit: contain; border: 1px solid #ccc; }
+            .print-issue-body img { max-width: 230px; max-height: 175px; object-fit: contain; border: 1px solid #ccc; }
             .print-issue-text { flex: 1; font-size: 10pt; }
-            .signatures { display: flex; justify-content: space-between; margin-top: 50px; page-break-inside: avoid; }
+            
+            .signatures { display: flex; justify-content: space-between; margin-top: 45px; margin-bottom: 30px; page-break-inside: avoid; }
             .sig-box { width: 42%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 9pt; }
+            
+            .print-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                border-top: 1px solid #666;
+                padding-top: 6px;
+                font-size: 8.5pt;
+                color: #333;
+                text-align: center;
+                background: #fff;
+            }
         }
     </style>
 </head>
@@ -77,10 +116,21 @@
 <div class="no-print">
     <h1>📋 Protokół z Kontroli</h1>
 
+    <!-- DANE OGÓLNE -->
     <div class="card">
-        <h2>1. Dane ogólne zadania</h2>
+        <h2>1. Nagłówek, logo i dane zadania</h2>
+        
+        <label class="field-label">Logo instytucji / firmy (lewy górny róg PDF):</label>
+        <input type="file" id="logoInput" class="file-input-hidden" accept="image/*">
+        <label for="logoInput" class="btn btn-outline">🏢 Wybierz logo z galerii</label>
+        <div id="logo-preview-box"></div>
+
+        <label class="field-label" for="orgName">Nazwa instytucji / Oddziału (obok logo):</label>
+        <textarea id="orgName" style="min-height: 68px;">Generalna Dyrekcja Dróg Krajowych i Autostrad
+Oddział w Białymstoku</textarea>
+
         <label class="field-label" for="taskName">Nazwa zadania / obiektu:</label>
-        <input type="text" id="taskName" placeholder="np. Przebudowa ul. Polnej w Białymstoku">
+        <input type="text" id="taskName" placeholder="np. Przebudowa drogi krajowej...">
 
         <label class="field-label" for="contractNo">Numer umowy:</label>
         <input type="text" id="contractNo" placeholder="np. UM/2026/14/INW">
@@ -89,9 +139,13 @@
         <input type="date" id="inspectDate">
 
         <label class="field-label" for="inspector">Osoba kontrolująca:</label>
-        <input type="text" id="inspector" placeholder="Imię i nazwisko / funkcja">
+        <input type="text" id="inspector" placeholder="Imię i nazwisko / stanowisko">
+
+        <label class="field-label" for="footerText">Stopka na dole protokołu PDF:</label>
+        <input type="text" id="footerText" value="Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku">
     </div>
 
+    <!-- DODAWANIE USTERKI -->
     <div class="card">
         <h2>2. Dodaj nową usterkę</h2>
         
@@ -115,12 +169,13 @@
             <button type="button" class="btn btn-mic" id="micBtn" title="Dyktuj głosowo">🎤</button>
         </div>
         <div id="micStatus" style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">
-            Kliknij 🎤 aby dyktować lub użyj mikrofonu na klawiaturze telefonu.
+            Kliknij w pole opisu i użyj ikony mikrofonu na klawiaturze iPhone'a.
         </div>
 
         <button type="button" class="btn btn-primary" id="btnAddIssue">➕ Dodaj usterkę do protokołu</button>
     </div>
 
+    <!-- LISTA DODANYCH USTEREK -->
     <div class="card">
         <h2>3. Lista usterek w protokole (<span id="issueCount">0</span>)</h2>
         <div id="issuesList">
@@ -128,13 +183,20 @@
         </div>
     </div>
 
+    <!-- GENEROWANIE PDF -->
     <button type="button" class="btn btn-success" id="btnPrint">📄 Generuj Protokół PDF / Drukuj</button>
-    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" id="btnClear">🗑️ Wyczyść cały formularz</button>
+    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" id="btnClear">🗑️ Wyczyść usterki i dane zadania</button>
 </div>
 
+<!-- SZABLON WYDRUKU PDF -->
 <div id="print-section">
+    <div class="print-top-brand">
+        <img id="p-logo" class="print-logo" style="display:none;" alt="Logo">
+        <div id="p-orgName" class="print-org-name"></div>
+    </div>
+
     <div class="print-header">
-        <h1>PROTOKÓŁ Z KONTROLI W TERENIE</h1>
+        <h1>Protokół z kontroli w terenie</h1>
         <div class="print-grid">
             <div><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
             <div><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
@@ -142,16 +204,21 @@
             <div><strong>Kontrolujący:</strong> <span id="p-inspector"></span></div>
         </div>
     </div>
+
     <div id="p-issuesList"></div>
+
     <div class="signatures">
         <div class="sig-box">Podpis osoby kontrolującej</div>
         <div class="sig-box">Podpis przedstawiciela Wykonawcy</div>
     </div>
+
+    <div id="p-footer" class="print-footer"></div>
 </div>
 
 <script>
     var issues = [];
     var currentPhotoBase64 = "";
+    var currentLogoBase64 = "";
     var currentLocationText = "Nie pobrano lokalizacji";
     var currentCoords = "";
 
@@ -162,6 +229,7 @@
         }
         loadFromStorage();
 
+        document.getElementById("logoInput").addEventListener("change", handleLogoUpload);
         document.getElementById("cameraInput").addEventListener("change", handleImageUpload);
         document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
         document.getElementById("btnGps").addEventListener("click", getLocation);
@@ -171,6 +239,57 @@
         document.getElementById("btnClear").addEventListener("click", clearAll);
     });
 
+    // Obsługa logo instytucji
+    function handleLogoUpload(event) {
+        var files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        var file = files[0];
+        var objectUrl = URL.createObjectURL(file);
+        var img = new Image();
+
+        img.onload = function() {
+            var canvas = document.createElement("canvas");
+            var MAX_HEIGHT = 150;
+            var width = img.width;
+            var height = img.height;
+
+            if (height > MAX_HEIGHT) {
+                width = Math.round((width * MAX_HEIGHT) / height);
+                height = MAX_HEIGHT;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            currentLogoBase64 = canvas.toDataURL("image/png");
+
+            renderLogoPreview();
+            saveToStorage();
+            URL.revokeObjectURL(objectUrl);
+        };
+        img.src = objectUrl;
+    }
+
+    function renderLogoPreview() {
+        var box = document.getElementById("logo-preview-box");
+        if (currentLogoBase64) {
+            box.innerHTML = "<img src='" + currentLogoBase64 + "' alt='Logo'>" +
+                            "<button type='button' class='btn btn-danger' onclick='removeLogo()'>Usuń logo</button>";
+        } else {
+            box.innerHTML = "";
+        }
+    }
+
+    function removeLogo() {
+        currentLogoBase64 = "";
+        document.getElementById("logoInput").value = "";
+        renderLogoPreview();
+        saveToStorage();
+    }
+
+    // 1. Obsługa aparatu i galerii
     function handleImageUpload(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
@@ -214,13 +333,14 @@
         img.src = objectUrl;
     }
 
+    // 2. Pobieranie GPS i zamiana na adres
     function getLocation() {
         var statusEl = document.getElementById("gpsStatus");
         if (!navigator.geolocation) {
             statusEl.innerText = "⚠️ Twoja przeglądarka nie obsługuje GPS.";
             return;
         }
-        statusEl.innerHTML = "⏳ <strong>Szukam sygnału GPS...</strong> (upewnij się, że lokalizacja w telefonie jest włączona)";
+        statusEl.innerHTML = "⏳ <strong>Szukam sygnału GPS...</strong>";
 
         navigator.geolocation.getCurrentPosition(
             function(position) {
@@ -228,7 +348,7 @@
                 var lon = position.coords.longitude.toFixed(6);
                 currentCoords = lat + ", " + lon;
                 currentLocationText = "GPS: " + currentCoords;
-                statusEl.innerHTML = "📍 Współrzędne: <strong>" + currentCoords + "</strong> (pobieram nazwę ulicy...)";
+                statusEl.innerHTML = "📍 Współrzędne: <strong>" + currentCoords + "</strong> (pobieram adres...)";
 
                 fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&addressdetails=1")
                     .then(function(res) { return res.json(); })
@@ -251,7 +371,7 @@
             },
             function(err) {
                 var msg = "⚠️ Błąd GPS: ";
-                if (err.code === 1) msg += "Odmówiono dostępu do lokalizacji. Zezwól na lokalizację w ustawieniach przeglądarki.";
+                if (err.code === 1) msg += "Odmówiono dostępu do lokalizacji.";
                 else if (err.code === 2) msg += "Brak sygnału GPS.";
                 else msg += "Przekroczono czas oczekiwania.";
                 statusEl.innerText = msg;
@@ -260,6 +380,7 @@
         );
     }
 
+    // 3. Dyktowanie głosowe
     var recognition = null;
     var isRecording = false;
 
@@ -273,7 +394,7 @@
         recognition.onstart = function() {
             isRecording = true;
             document.getElementById("micBtn").classList.add("recording");
-            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz do telefonu!</strong>";
+            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz!</strong>";
         };
 
         recognition.onresult = function(event) {
@@ -283,32 +404,28 @@
         };
 
         recognition.onerror = function(event) {
-            document.getElementById("micStatus").innerText = "⚠️ Błąd mikrofonu (" + event.error + "). Użyj ikony mikrofonu na klawiaturze telefonu.";
+            document.getElementById("micStatus").innerText = "⚠️ Użyj ikony mikrofonu na klawiaturze iPhone'a.";
         };
 
         recognition.onend = function() {
             isRecording = false;
             document.getElementById("micBtn").classList.remove("recording");
-            document.getElementById("micStatus").innerText = "Kliknij 🎤 aby dyktować dalej lub użyj mikrofonu na klawiaturze.";
         };
     }
 
     function toggleDictation() {
         if (!recognition) {
-            alert("Twoja przeglądarka (np. Safari na iPhone) blokuje ten przycisk. Kliknij w pole opisu i naciśnij ikonę mikrofonu bezpośrednio na klawiaturze telefonu!");
+            alert("Kliknij w pole opisu i użyj ikony mikrofonu na klawiaturze iPhone'a!");
             return;
         }
         if (isRecording) {
             recognition.stop();
         } else {
-            try {
-                recognition.start();
-            } catch (e) {
-                alert("Mikrofon jest już aktywny lub zablokowany przez przeglądarkę.");
-            }
+            try { recognition.start(); } catch (e) {}
         }
     }
 
+    // 4. Dodawanie usterki do listy
     function addIssue() {
         var desc = document.getElementById("issueDesc").value.trim();
         if (!desc && !currentPhotoBase64) {
@@ -370,16 +487,29 @@
         listEl.innerHTML = html;
     }
 
+    // 5. Generowanie PDF
     function prepareAndPrint() {
         if (issues.length === 0) {
             alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu.");
             return;
         }
 
+        var logoEl = document.getElementById("p-logo");
+        if (currentLogoBase64) {
+            logoEl.src = currentLogoBase64;
+            logoEl.style.display = "block";
+        } else {
+            logoEl.style.display = "none";
+        }
+
+        var orgText = document.getElementById("orgName").value || "";
+        document.getElementById("p-orgName").innerHTML = orgText.replace(/\n/g, "<br>");
+
         document.getElementById("p-taskName").innerText = document.getElementById("taskName").value || "—";
         document.getElementById("p-contractNo").innerText = document.getElementById("contractNo").value || "—";
         document.getElementById("p-inspectDate").innerText = document.getElementById("inspectDate").value || "—";
         document.getElementById("p-inspector").innerText = document.getElementById("inspector").value || "—";
+        document.getElementById("p-footer").innerText = document.getElementById("footerText").value || "";
 
         var html = "";
         for (var i = 0; i < issues.length; i++) {
@@ -401,23 +531,30 @@
 
     function saveToStorage() {
         var state = {
+            logo: currentLogoBase64,
+            orgName: document.getElementById("orgName").value,
+            footerText: document.getElementById("footerText").value,
             taskName: document.getElementById("taskName").value,
             contractNo: document.getElementById("contractNo").value,
             inspector: document.getElementById("inspector").value,
             issues: issues
         };
         try {
-            localStorage.setItem("protokol_terenowy_v2", JSON.stringify(state));
-        } catch (e) {
-            console.warn("Pamięć podręczna pełna.");
-        }
+            localStorage.setItem("protokol_gddkia_v3", JSON.stringify(state));
+        } catch (e) {}
     }
 
     function loadFromStorage() {
-        var saved = localStorage.getItem("protokol_terenowy_v2");
+        var saved = localStorage.getItem("protokol_gddkia_v3");
         if (saved) {
             try {
                 var state = JSON.parse(saved);
+                if (state.logo) {
+                    currentLogoBase64 = state.logo;
+                    renderLogoPreview();
+                }
+                if (state.orgName) document.getElementById("orgName").value = state.orgName;
+                if (state.footerText) document.getElementById("footerText").value = state.footerText;
                 document.getElementById("taskName").value = state.taskName || "";
                 document.getElementById("contractNo").value = state.contractNo || "";
                 document.getElementById("inspector").value = state.inspector || "";
@@ -428,11 +565,11 @@
     }
 
     function clearAll() {
-        if (confirm("Czy na pewno wyczyścić wszystkie dane i zacząć nowy protokół?")) {
-            localStorage.removeItem("protokol_terenowy_v2");
+        if (confirm("Wyczyścić listę usterek oraz nazwę zadania i nr umowy? (Logo i stopka zostaną zachowane)")) {
             issues = [];
             document.getElementById("taskName").value = "";
             document.getElementById("contractNo").value = "";
+            saveToStorage();
             renderIssues();
         }
     }
