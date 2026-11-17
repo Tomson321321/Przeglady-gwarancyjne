@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Protokół z przeglądu gwarancyjnego (v15)</title>
+    <title>Protokół z przeglądu gwarancyjnego (v16)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary: #1a56db;
@@ -20,7 +20,7 @@
         }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; }
-        h1.app-title { font-size: 1.35rem; text-align: center; color: var(--primary); margin-bottom: 18px; }
+        h1 { font-size: 1.35rem; text-align: center; color: var(--primary); margin-bottom: 18px; }
         h2 { font-size: 1.05rem; margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         label.field-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; margin-top: 12px; }
@@ -30,144 +30,173 @@
         textarea { resize: vertical; min-height: 85px; }
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
+            width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 0.98rem; font-weight: 600;
             cursor: pointer; margin-top: 10px; text-align: center; user-select: none;
         }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:active { background: var(--primary-hover); }
         .btn-outline { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
         .btn-outline:active { background: #dbeafe; }
-        .btn-success { background: var(--success); color: white; font-size: 1.1rem; padding: 15px; }
+        .btn-success { background: var(--success); color: white; font-size: 1.08rem; padding: 15px; }
         .btn-danger { background: #fee2e2; color: var(--danger); width: auto; padding: 6px 12px; font-size: 0.85rem; margin-top: 0; }
         
         .photo-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .file-input-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
         
-        .voice-row { display: flex; gap: 8px; align-items: stretch; margin-top: 5px; }
-        .btn-mic { width: auto; min-width: 54px; padding: 0 14px; margin-top: 0; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 1.3rem; }
-        .btn-mic.recording { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.2s infinite; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; margin-top: 12px; }
-        .preview-item { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #f9fafb; height: 105px; }
-        .preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 12px; }
+        .preview-box { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #f9fafb; aspect-ratio: 1 / 1; }
+        .preview-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .btn-remove-photo {
             position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%;
             background: rgba(220, 38, 38, 0.92); color: white; border: 2px solid white;
-            font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; padding: 0; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-weight: bold; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        .logo-preview-box { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-        .logo-preview-box img { max-height: 55px; max-width: 160px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; background: #fff; }
+        .logo-preview-wrap { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+        .logo-preview-wrap img { max-height: 55px; max-width: 160px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; background: #fff; }
+
+        .voice-row { display: flex; gap: 8px; align-items: stretch; margin-top: 5px; }
+        .btn-mic { width: auto; min-width: 54px; padding: 0 14px; margin-top: 0; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 1.3rem; }
+        .btn-mic.recording { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
         .status-box { font-size: 0.85rem; color: #374151; margin-top: 6px; background: #f9fafb; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.4; }
-        
+        #errorBanner { display: none; background: #fee2e2; color: #991b1b; border: 1px solid #f87171; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; }
+
         .issue-item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa; }
         .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .issue-photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 8px 0; }
-        .issue-photos-grid img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; display: block; }
+        .issue-photos-grid img { width: 100%; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
         .issue-meta { font-size: 0.82rem; color: #4b5563; }
 
-        /* TRYB PODGLĄDU PROTOKOŁU / PDF */
-        #report-view { display: none; background: #525659; min-height: 100vh; padding: 65px 10px 30px 10px; }
-        .report-toolbar {
-            position: fixed; top: 0; left: 0; right: 0; background: #1f2937; color: white;
-            padding: 8px 10px; display: flex; gap: 6px; justify-content: space-between; align-items: center;
-            z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        /* Widok podglądu i wydruku dokumentu */
+        #preview-overlay { display: none; background: #e5e7eb; min-height: 100vh; padding-bottom: 40px; }
+        .preview-toolbar {
+            position: sticky; top: 0; z-index: 999; background: #1f2937; color: white;
+            padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
-        .report-toolbar button {
-            padding: 9px 10px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; flex: 1;
+        .toolbar-btn {
+            padding: 9px 12px; border: none; border-radius: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 5px;
         }
-        .btn-back { background: #4b5563; color: white; }
-        .btn-pdf-dl { background: #10b981; color: white; }
-        .btn-docx-dl { background: #2563eb; color: white; }
-        .btn-sys-print { background: #6366f1; color: white; }
+        .tb-back { background: #4b5563; color: white; }
+        .tb-pdf { background: #dc2626; color: white; }
+        .tb-docx { background: #2563eb; color: white; }
+        .tb-print { background: #059669; color: white; }
 
-        /* ARKUSZ PROTOKOŁU A4 */
-        #pdf-sheet {
-            background: white; width: 680px; max-width: 100%; margin: 0 auto; padding: 12mm 10mm;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: #000;
+        #document-sheet {
+            background: white; width: 680px; max-width: 100%; margin: 16px auto; padding: 24px 28px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12); color: #000; font-size: 10.5pt; line-height: 1.4;
         }
-        .doc-top-institution {
-            display: flex; align-items: center; justify-content: flex-start; gap: 14px;
-            border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 14px;
+        .doc-top-bar {
+            display: flex; align-items: center; gap: 16px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 14px;
         }
-        .doc-top-institution img { max-height: 58px; max-width: 150px; object-fit: contain; }
-        .doc-institution-text { font-size: 11pt; font-weight: bold; line-height: 1.3; color: #000; }
-        .doc-main-title { text-align: center; font-size: 15pt; font-weight: bold; margin: 10px 0 14px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .doc-logo { max-height: 64px; max-width: 160px; object-fit: contain; }
+        .doc-org-name { font-size: 10.5pt; font-weight: bold; line-height: 1.35; color: #111; }
+        .doc-title { text-align: center; font-size: 15pt; font-weight: bold; text-transform: uppercase; margin: 14px 0; letter-spacing: 0.4px; }
         
         .doc-meta-box {
-            border: 1.5px solid #000; padding: 10px 12px; margin-bottom: 10px; font-size: 10pt; line-height: 1.6;
+            border: 1.5px solid #000; padding: 10px 14px; margin-bottom: 10px; background: #fafafa;
         }
-        .doc-inspector-line {
-            font-size: 10pt; margin-bottom: 16px; padding: 4px 2px;
-        }
+        .doc-meta-row { margin-bottom: 5px; font-size: 10pt; }
+        .doc-meta-row:last-child { margin-bottom: 0; }
+        .doc-inspector-line { margin-bottom: 16px; font-size: 10pt; padding-left: 2px; }
 
-        .doc-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9.5pt; margin-bottom: 18px; }
-        .doc-table th { background: #e5e7eb; border: 1px solid #000; padding: 7px 6px; text-align: left; font-weight: bold; }
-        .doc-table td { border: 1px solid #000; padding: 7px 6px; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
-        .doc-table tr { break-inside: avoid; page-break-inside: avoid; }
-        .doc-table-photos { display: flex; flex-direction: column; gap: 6px; }
-        .doc-table-photos img { width: 100%; max-height: 145px; object-fit: contain; border: 1px solid #ccc; display: block; }
+        .doc-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 18px; }
+        .doc-table th, .doc-table td { border: 1px solid #000; padding: 7px 8px; vertical-align: top; word-wrap: break-word; font-size: 9.5pt; }
+        .doc-table th { background: #f0f0f0; font-weight: bold; text-align: center; }
+        .doc-table tr { page-break-inside: avoid; break-inside: avoid; }
+        .col-nr { width: 8%; text-align: center; font-weight: bold; }
+        .col-desc { width: 32%; }
+        .col-photos { width: 38%; }
+        .col-loc { width: 22%; font-size: 8.8pt; }
+
+        .doc-photo-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+        .doc-photo-grid img { width: 105px; height: 82px; object-fit: cover; border: 1px solid #999; }
 
         .bottom-block {
-            display: flex; justify-content: space-between; align-items: flex-end; gap: 15px;
-            margin-top: 22px; break-inside: avoid; page-break-inside: avoid;
+            display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
+            margin-top: 24px; page-break-inside: avoid; break-inside: avoid;
         }
         .qr-box {
-            display: flex; align-items: center; gap: 10px; border: 1px solid #999; padding: 8px; border-radius: 4px; max-width: 58%;
+            display: flex; align-items: center; gap: 10px; border: 1px solid #999; padding: 8px 10px;
+            border-radius: 4px; max-width: 56%; background: #fafafa;
         }
-        .qr-box img { width: 105px; height: 105px; display: block; flex-shrink: 0; }
-        .qr-caption { font-size: 8pt; line-height: 1.35; color: #222; }
-        .sig-box { width: 38%; border-top: 1px solid #000; text-align: center; padding-top: 6px; font-size: 9.5pt; }
+        .qr-box img { width: 86px; height: 86px; display: block; flex-shrink: 0; }
+        .qr-caption { font-size: 8pt; line-height: 1.3; color: #222; }
+        .sig-area { width: 38%; text-align: center; padding-top: 36px; }
+        .sig-line { border-top: 1px solid #000; padding-top: 5px; font-size: 9pt; }
 
-        /* TRYB INTERAKTYWNEJ MAPY (PO ZESKANOWANIU QR) */
-        #map-view { display: none; position: fixed; inset: 0; background: #fff; z-index: 10000; flex-direction: column; }
+        /* Widok interaktywnej mapy po zeskanowaniu QR */
+        #map-mode { display: none; position: fixed; inset: 0; z-index: 2000; background: #fff; flex-direction: column; }
         .map-header {
-            background: var(--primary); color: white; padding: 12px 15px;
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            background: #1a56db; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
-        .map-header h2 { margin: 0; font-size: 1.05rem; border: none; padding: 0; color: white; }
-        .map-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
-        #leaflet-map { flex: 1; width: 100%; }
-        .custom-pin {
+        #leafletMap { flex: 1; width: 100%; }
+        .pin-badge {
             background: #dc2626; color: white; border: 2px solid white; border-radius: 50%;
             width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+            font-weight: bold; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,0.45);
         }
-        .gmaps-nav-btn {
-            display: inline-block; margin-top: 8px; padding: 8px 12px; background: #1a56db; color: #fff !important;
-            text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem;
+        .nav-gmaps-btn {
+            display: inline-block; margin-top: 8px; padding: 7px 11px; background: #1a56db; color: #fff !important;
+            text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
         }
 
-        @page {
-            size: A4 portrait;
-            margin: 10mm 10mm 14mm 10mm;
-            @bottom-right {
-                content: "strona " counter(page) "/" counter(pages);
-                font-size: 9pt;
-                color: #333;
-            }
-        }
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 10mm 16mm 10mm;
+                @bottom-right {
+                    content: "strona " counter(page) "/" counter(pages);
+                    font-size: 9pt;
+                    color: #333;
+                }
+            }
             body { background: white !important; padding: 0 !important; margin: 0 !important; }
-            #app-view, .report-toolbar, #map-view { display: none !important; }
-            #report-view { display: block !important; background: white !important; padding: 0 !important; }
-            #pdf-sheet { box-shadow: none !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            #form-view, .preview-toolbar, #map-mode { display: none !important; }
+            #preview-overlay { display: block !important; background: white !important; padding: 0 !important; }
+            #document-sheet { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
         }
     </style>
 </head>
 <body>
 
-<!-- WIDOK 1: FORMULARZ APLIKACJI -->
-<div id="app-view">
-    <h1 class="app-title">📋 Protokół z przeglądu gwarancyjnego (v15)</h1>
+<!-- TRYB INTERAKTYWNEJ MAPY (OTWIERANY Z KODU QR) -->
+<div id="map-mode">
+    <div class="map-header">
+        <div>
+            <strong style="font-size: 1.05rem;">🗺️ Mapa usterek z przeglądu</strong>
+            <div id="mapSubtitle" style="font-size: 0.8rem; opacity: 0.9;">Kliknij numer pinezki, aby nawigować</div>
+        </div>
+        <button type="button" id="btnFitMap" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 6px 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+            Pokaż wszystkie
+        </button>
+    </div>
+    <div id="leafletMap"></div>
+</div>
+
+<!-- GŁÓWNY FORMULARZ APLIKACJI -->
+<div id="form-view">
+    <h1>📋 Protokół z przeglądu gwarancyjnego (v16)</h1>
+    <div id="errorBanner"></div>
 
     <!-- DANE OGÓLNE -->
     <div class="card">
         <h2>1. Dane ogólne zadania</h2>
+
+        <label class="field-label">Logo instytucji / firmy (w lewym rogu protokołu):</label>
+        <input type="file" id="logoInput" class="file-input-hidden" accept="image/*">
+        <div class="logo-preview-wrap">
+            <label for="logoInput" class="btn btn-outline" style="width: auto; margin-top: 0; padding: 9px 14px;">
+                🏢 Wybierz logo z galerii
+            </label>
+            <div id="logoPreviewContainer"></div>
+        </div>
+
         <label class="field-label" for="taskName">Nazwa zadania / obiektu:</label>
         <input type="text" id="taskName" placeholder="np. Przebudowa drogi krajowej nr 8...">
 
@@ -179,18 +208,13 @@
 
         <label class="field-label" for="inspector">Kontrolujący:</label>
         <input type="text" id="inspector" placeholder="Imię i nazwisko / stanowisko">
-
-        <label class="field-label">Logo instytucji (lewy górny róg):</label>
-        <input type="file" id="logoInput" class="file-input-hidden" accept="image/*">
-        <label for="logoInput" class="btn btn-outline">🏢 Wybierz logo z galerii</label>
-        <div id="logoPreviewContainer" class="logo-preview-box"></div>
     </div>
 
     <!-- DODAWANIE USTERKI -->
     <div class="card">
         <h2>2. Dodaj nową usterkę</h2>
         
-        <label class="field-label">Zdjęcia usterki (możesz dodać kilka):</label>
+        <label class="field-label">Zdjęcia usterki (możesz dodać kilka zdjęć):</label>
         <input type="file" id="cameraInput" class="file-input-hidden" accept="image/*" capture="environment">
         <input type="file" id="galleryInput" class="file-input-hidden" accept="image/*" multiple>
         
@@ -198,7 +222,7 @@
             <label for="cameraInput" class="btn btn-outline">📷 Zrób zdjęcie</label>
             <label for="galleryInput" class="btn btn-outline">🖼️ Z galerii</label>
         </div>
-        <div id="photoStatus" style="font-size:0.82rem; color:#1a56db; margin-top:6px;"></div>
+        <div id="photoStatus" style="font-size: 0.82rem; color: #1a56db; margin-top: 6px;"></div>
         <div id="preview-container" class="preview-grid"></div>
 
         <label class="field-label">Lokalizacja GPS:</label>
@@ -227,33 +251,36 @@
 
     <!-- GENEROWANIE PROTOKOŁU -->
     <button type="button" class="btn btn-success" id="btnGenerate">📄 Generuj protokół</button>
-    <button type="button" class="btn btn-danger" style="width:100%; margin-top:20px;" id="btnClear">🗑️ Wyczyść formularz</button>
+    <button type="button" class="btn btn-danger" style="width:100%; margin-top:18px;" id="btnClear">🗑️ Wyczyść listę usterek</button>
 </div>
 
-<!-- WIDOK 2: PODGLĄD PROTOKOŁU / PDF / DOCX -->
-<div id="report-view">
-    <div class="report-toolbar">
-        <button type="button" class="btn-back" id="btnBack">⬅️ Wróć</button>
-        <button type="button" class="btn-pdf-dl" id="btnDownloadPdf">⬇️ PDF</button>
-        <button type="button" class="btn-docx-dl" id="btnDownloadDocx">📝 DOCX</button>
-        <button type="button" class="btn-sys-print" id="btnSysPrint">🖨️ Drukuj</button>
+<!-- PODGLĄD GOTOWEGO PROTOKOŁU I EKSPORT -->
+<div id="preview-overlay">
+    <div class="preview-toolbar">
+        <button type="button" class="toolbar-btn tb-back" id="btnBackToEdit">⬅️ Edytuj</button>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="toolbar-btn tb-pdf" id="btnDownloadPdf">⬇️ PDF</button>
+            <button type="button" class="toolbar-btn tb-docx" id="btnDownloadDocx">📝 DOCX</button>
+            <button type="button" class="toolbar-btn tb-print" id="btnSystemPrint">🖨️ Drukuj</button>
+        </div>
     </div>
 
-    <div id="pdf-sheet">
-        <div class="doc-top-institution">
-            <img id="docLogoImg" src="" alt="Logo" style="display:none;">
-            <div class="doc-institution-text">
-                Generalna Dyrekcja Dróg Krajowych i Autostrad<br>
+    <div id="document-sheet">
+        <div class="doc-top-bar">
+            <img id="docLogoImg" class="doc-logo" style="display:none;" alt="Logo">
+            <div class="doc-org-name">
+                Generalna Dyrekcja<br>
+                Dróg Krajowych i Autostrad<br>
                 Oddział w Białymstoku
             </div>
         </div>
 
-        <div class="doc-main-title">Protokół z przeglądu gwarancyjnego</div>
+        <div class="doc-title">Protokół z przeglądu gwarancyjnego</div>
 
         <div class="doc-meta-box">
-            <div><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
-            <div><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
-            <div><strong>Data kontroli:</strong> <span id="p-inspectDate"></span></div>
+            <div class="doc-meta-row"><strong>Nazwa zadania:</strong> <span id="p-taskName"></span></div>
+            <div class="doc-meta-row"><strong>Numer umowy:</strong> <span id="p-contractNo"></span></div>
+            <div class="doc-meta-row"><strong>Data kontroli:</strong> <span id="p-inspectDate"></span></div>
         </div>
 
         <div class="doc-inspector-line">
@@ -263,45 +290,55 @@
         <table class="doc-table">
             <thead>
                 <tr>
-                    <th style="width: 11%;">Nr usterki</th>
-                    <th style="width: 31%;">Opis usterki</th>
-                    <th style="width: 34%;">Zdjęcia</th>
-                    <th style="width: 24%;">Lokalizacja</th>
+                    <th class="col-nr">Nr usterki</th>
+                    <th class="col-desc">Opis usterki</th>
+                    <th class="col-photos">Zdjęcia</th>
+                    <th class="col-loc">Lokalizacja</th>
                 </tr>
             </thead>
-            <tbody id="p-issuesBody"></tbody>
+            <tbody id="p-tableBody"></tbody>
         </table>
 
         <div class="bottom-block">
-            <div class="qr-box" id="qrContainer"></div>
-            <div class="sig-box">Podpis przedstawiciela komisji</div>
+            <div class="qr-box" id="qrSection"></div>
+            <div class="sig-area">
+                <div class="sig-line">Podpis przedstawiciela komisji</div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- WIDOK 3: INTERAKTYWNA MAPA USTEREK (PO ZESKANOWANIU QR) -->
-<div id="map-view">
-    <div class="map-header">
-        <h2>🗺️ Mapa usterek z protokołu</h2>
-        <button type="button" id="btnCloseMap">Zamknij mapę</button>
-    </div>
-    <div id="leaflet-map"></div>
-</div>
-
 <script>
+    window.onerror = function(msg, url, line) {
+        var b = document.getElementById("errorBanner");
+        if (b) {
+            b.style.display = "block";
+            b.innerText = "Błąd aplikacji (linia " + line + "): " + msg;
+        }
+    };
+
     var issues = [];
     var currentPhotos = [];
     var currentLocationText = "Nie pobrano lokalizacji";
-    var currentLat = "";
-    var currentLon = "";
+    var currentCoords = "";
     var savedLogoBase64 = "";
-    var currentQrUrl = "";
+    var leafletMapInstance = null;
+    var leafletBounds = null;
 
-    window.onload = function() {
+    function initApp() {
+        // Sprawdź, czy strona została otwarta z kodu QR jako mapa usterek
+        var params = new URLSearchParams(window.location.search);
+        var mapData = params.get("m");
+        if (mapData) {
+            openInteractiveMap(mapData);
+            return;
+        }
+
         var dateInput = document.getElementById("inspectDate");
         if (dateInput) {
             dateInput.valueAsDate = new Date();
         }
+
         loadFromStorage();
 
         document.getElementById("logoInput").addEventListener("change", handleLogoUpload);
@@ -310,26 +347,33 @@
         document.getElementById("btnGps").addEventListener("click", getLocation);
         document.getElementById("micBtn").addEventListener("click", toggleDictation);
         document.getElementById("btnAddIssue").addEventListener("click", addIssue);
-        document.getElementById("btnGenerate").addEventListener("click", openReportView);
+        document.getElementById("btnGenerate").addEventListener("click", openProtocolPreview);
         document.getElementById("btnClear").addEventListener("click", clearAll);
 
-        document.getElementById("btnBack").addEventListener("click", closeReportView);
+        document.getElementById("btnBackToEdit").addEventListener("click", function() {
+            document.getElementById("preview-overlay").style.display = "none";
+            document.getElementById("form-view").style.display = "block";
+        });
         document.getElementById("btnDownloadPdf").addEventListener("click", downloadPdfFile);
         document.getElementById("btnDownloadDocx").addEventListener("click", downloadDocxFile);
-        document.getElementById("btnSysPrint").addEventListener("click", function() { window.print(); });
-        document.getElementById("btnCloseMap").addEventListener("click", function() {
-            document.getElementById("map-view").style.display = "none";
-            document.getElementById("app-view").style.display = "block";
+        document.getElementById("btnSystemPrint").addEventListener("click", function() {
+            window.print();
         });
+    }
 
-        checkMapQueryParam();
-    };
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+        initApp();
+    }
 
+    // 1. Obsługa logo firmy
     function handleLogoUpload(event) {
-        var fileList = Array.from(event.target.files || []);
-        if (fileList.length === 0) return;
-        var file = fileList.shift();
-        var url = URL.createObjectURL(file);
+        var filesList = Array.from(event.target.files || []);
+        var file = filesList.at(0);
+        if (!file) return;
+
+        var objUrl = URL.createObjectURL(file);
         var img = new Image();
         img.onload = function() {
             var canvas = document.createElement("canvas");
@@ -345,38 +389,39 @@
             var ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, w, h);
             savedLogoBase64 = canvas.toDataURL("image/png");
+            URL.revokeObjectURL(objUrl);
+
             renderLogoPreview();
-            saveToStorage();
-            URL.revokeObjectURL(url);
+            try {
+                localStorage.setItem("protokol_logo_v16", savedLogoBase64);
+            } catch (e) {}
         };
-        img.src = url;
+        img.src = objUrl;
     }
 
     function renderLogoPreview() {
         var box = document.getElementById("logoPreviewContainer");
-        if (!savedLogoBase64) {
+        if (savedLogoBase64) {
+            box.innerHTML = "<img src='" + savedLogoBase64 + "' alt='Logo'>";
+        } else {
             box.innerHTML = "";
-            return;
         }
-        box.innerHTML = "<img src='" + savedLogoBase64 + "' alt='Logo'><button type='button' class='btn btn-danger' id='btnDelLogo'>Usuń logo</button>";
-        document.getElementById("btnDelLogo").addEventListener("click", function() {
-            savedLogoBase64 = "";
-            renderLogoPreview();
-            saveToStorage();
-        });
     }
 
+    // 2. Obsługa wielu zdjęć do jednej usterki i usuwania nieudanych ujęć
     function handleImagesUpload(event) {
         var filesArray = Array.from(event.target.files || []);
         if (filesArray.length === 0) return;
 
         var statusEl = document.getElementById("photoStatus");
         statusEl.innerText = "⏳ Przetwarzanie zdjęć (" + filesArray.length + ")...";
+
+        // Automatycznie pobierz lokalizację przy dodaniu zdjęcia
         getLocation();
 
         var processedCount = 0;
         filesArray.forEach(function(file) {
-            var url = URL.createObjectURL(file);
+            var objUrl = URL.createObjectURL(file);
             var img = new Image();
             img.onload = function() {
                 var canvas = document.createElement("canvas");
@@ -393,23 +438,23 @@
                 ctx.drawImage(img, 0, 0, w, h);
                 var dataUrl = canvas.toDataURL("image/jpeg", 0.72);
                 currentPhotos.push(dataUrl);
-                URL.revokeObjectURL(url);
+                URL.revokeObjectURL(objUrl);
 
                 processedCount++;
                 if (processedCount === filesArray.length) {
-                    statusEl.innerText = "";
+                    statusEl.innerText = "✅ Liczba zdjęć przypisanych do tej usterki: " + currentPhotos.length;
                     renderCurrentPhotos();
                 }
             };
             img.onerror = function() {
-                URL.revokeObjectURL(url);
+                URL.revokeObjectURL(objUrl);
                 processedCount++;
                 if (processedCount === filesArray.length) {
-                    statusEl.innerText = "";
+                    statusEl.innerText = "⚠️ Część zdjęć nie mogła zostać wczytana.";
                     renderCurrentPhotos();
                 }
             };
-            img.src = url;
+            img.src = objUrl;
         });
 
         event.target.value = "";
@@ -418,45 +463,51 @@
     function renderCurrentPhotos() {
         var container = document.getElementById("preview-container");
         container.innerHTML = "";
-        currentPhotos.forEach(function(photoSrc, idx) {
-            var itemDiv = document.createElement("div");
-            itemDiv.className = "preview-item";
+        currentPhotos.forEach(function(photoData, idx) {
+            var box = document.createElement("div");
+            box.className = "preview-box";
 
-            var imgEl = document.createElement("img");
-            imgEl.src = photoSrc;
+            var img = document.createElement("img");
+            img.src = photoData;
+            img.alt = "Zdjęcie " + (idx + 1);
 
             var delBtn = document.createElement("button");
             delBtn.type = "button";
             delBtn.className = "btn-remove-photo";
             delBtn.innerText = "✕";
-            delBtn.addEventListener("click", function() {
+            delBtn.title = "Usuń to zdjęcie";
+            delBtn.onclick = function() {
                 currentPhotos.splice(idx, 1);
+                document.getElementById("photoStatus").innerText = currentPhotos.length > 0
+                    ? "✅ Liczba zdjęć przypisanych do tej usterki: " + currentPhotos.length
+                    : "";
                 renderCurrentPhotos();
-            });
+            };
 
-            itemDiv.appendChild(imgEl);
-            itemDiv.appendChild(delBtn);
-            container.appendChild(itemDiv);
+            box.appendChild(img);
+            box.appendChild(delBtn);
+            container.appendChild(box);
         });
     }
 
+    // 3. Pobieranie GPS i zamiana na adres
     function getLocation() {
         var statusEl = document.getElementById("gpsStatus");
         if (!navigator.geolocation) {
-            statusEl.innerText = "⚠️ Przeglądarka nie obsługuje GPS.";
+            statusEl.innerText = "⚠️ Twoja przeglądarka nie obsługuje GPS.";
             return;
         }
-        statusEl.innerHTML = "⏳ <strong>Pobieram lokalizację GPS...</strong>";
+        statusEl.innerHTML = "⏳ <strong>Pobieram współrzędne GPS...</strong>";
 
         navigator.geolocation.getCurrentPosition(
             function(pos) {
-                currentLat = pos.coords.latitude.toFixed(6);
-                currentLon = pos.coords.longitude.toFixed(6);
-                var coordsStr = currentLat + ", " + currentLon;
-                currentLocationText = "GPS: " + coordsStr;
-                statusEl.innerHTML = "📍 Współrzędne: <strong>" + coordsStr + "</strong> (szukam adresu...)";
+                var lat = pos.coords.latitude.toFixed(6);
+                var lon = pos.coords.longitude.toFixed(6);
+                currentCoords = lat + "," + lon;
+                currentLocationText = "GPS: " + lat + ", " + lon;
+                statusEl.innerHTML = "📍 Współrzędne: <strong>" + lat + ", " + lon + "</strong> (szukam ulicy...)";
 
-                fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon + "&zoom=18&addressdetails=1")
+                fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&addressdetails=1")
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data && data.address) {
@@ -464,21 +515,21 @@
                             var road = a.road || a.pedestrian || a.suburb || "";
                             var house = a.house_number ? (" " + a.house_number) : "";
                             var city = a.city || a.town || a.village || "";
-                            var addr = [road + house, city].filter(Boolean).join(", ");
-                            if (addr) {
-                                currentLocationText = addr + " (GPS: " + coordsStr + ")";
+                            var shortAddr = [road + house, city].filter(Boolean).join(", ");
+                            if (shortAddr) {
+                                currentLocationText = shortAddr + " (GPS: " + lat + ", " + lon + ")";
                             }
                         }
                         statusEl.innerHTML = "✅ Lokalizacja: <strong>" + currentLocationText + "</strong>";
                     })
                     .catch(function() {
-                        statusEl.innerHTML = "📍 Zapisano współrzędne: <strong>" + coordsStr + "</strong>";
+                        statusEl.innerHTML = "📍 Zapisano współrzędne: <strong>" + lat + ", " + lon + "</strong>";
                     });
             },
             function(err) {
                 var msg = "⚠️ Błąd GPS: ";
-                if (err.code === 1) msg += "Brak zgody na lokalizację w ustawieniach Safari.";
-                else if (err.code === 2) msg += "Brak sygnału GPS.";
+                if (err.code === 1) msg += "Brak zgody na lokalizację (sprawdź Ustawienia Safari).";
+                else if (err.code === 2) msg += "Brak zasięgu GPS.";
                 else msg += "Przekroczono czas oczekiwania.";
                 statusEl.innerText = msg;
             },
@@ -486,6 +537,7 @@
         );
     }
 
+    // 4. Dyktowanie głosowe
     var recognition = null;
     var isRecording = false;
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
@@ -498,17 +550,18 @@
         recognition.onstart = function() {
             isRecording = true;
             document.getElementById("micBtn").classList.add("recording");
-            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham...</strong>";
+            document.getElementById("micStatus").innerHTML = "🔴 <strong style='color:#dc2626;'>Słucham... Mów teraz!</strong>";
         };
-        recognition.onresult = function(e) {
-            var resList = Array.from(e.results || []);
-            if (resList.length > 0) {
-                var firstAlt = Array.from(resList.shift() || []).shift();
-                if (firstAlt && firstAlt.transcript) {
-                    var descEl = document.getElementById("issueDesc");
-                    descEl.value += (descEl.value ? " " : "") + firstAlt.transcript;
-                }
+        recognition.onresult = function(event) {
+            var firstResult = Array.from(event.results || []).at(0);
+            var firstAlt = firstResult ? Array.from(firstResult).at(0) : null;
+            if (firstAlt && firstAlt.transcript) {
+                var descEl = document.getElementById("issueDesc");
+                descEl.value += (descEl.value ? " " : "") + firstAlt.transcript;
             }
+        };
+        recognition.onerror = function() {
+            document.getElementById("micStatus").innerText = "⚠️ Użyj ikony mikrofonu bezpośrednio na klawiaturze iPhone'a.";
         };
         recognition.onend = function() {
             isRecording = false;
@@ -519,19 +572,21 @@
 
     function toggleDictation() {
         if (!recognition) {
-            alert("Na iPhonie kliknij w pole opisu i użyj ikony mikrofonu na klawiaturze telefonu.");
+            alert("Kliknij w pole opisu usterki i użyj ikony mikrofonu w prawym dolnym rogu klawiatury iPhone'a.");
             return;
         }
-        if (isRecording) recognition.stop();
-        else {
+        if (isRecording) {
+            recognition.stop();
+        } else {
             try { recognition.start(); } catch (e) {}
         }
     }
 
+    // 5. Dodawanie usterki do listy
     function addIssue() {
         var desc = document.getElementById("issueDesc").value.trim();
         if (!desc && currentPhotos.length === 0) {
-            alert("Zrób zdjęcie lub wpisz opis usterki przed dodaniem!");
+            alert("Zrób przynajmniej jedno zdjęcie lub wpisz opis usterki!");
             return;
         }
 
@@ -543,20 +598,28 @@
             time: timeStr,
             photos: currentPhotos.slice(),
             location: currentLocationText,
-            lat: currentLat,
-            lon: currentLon,
+            coords: currentCoords,
             description: desc || "(Brak opisu tekstowego)"
         });
 
         currentPhotos = [];
-        renderCurrentPhotos();
+        document.getElementById("preview-container").innerHTML = "";
+        document.getElementById("photoStatus").innerText = "";
         document.getElementById("issueDesc").value = "";
 
         saveToStorage();
-        renderIssues();
+        renderIssuesList();
     }
 
-    function renderIssues() {
+    function deleteIssue(id) {
+        if (confirm("Usunąć tę usterkę z listy?")) {
+            issues = issues.filter(function(item) { return item.id !== id; });
+            saveToStorage();
+            renderIssuesList();
+        }
+    }
+
+    function renderIssuesList() {
         var listEl = document.getElementById("issuesList");
         document.getElementById("issueCount").innerText = issues.length;
 
@@ -566,37 +629,33 @@
         }
 
         listEl.innerHTML = "";
-        issues.forEach(function(item, index) {
+        issues.forEach(function(item, idx) {
             var card = document.createElement("div");
             card.className = "issue-item";
 
             var header = document.createElement("div");
             header.className = "issue-header";
-            header.innerHTML = "<strong>Usterka #" + (index + 1) + " (" + item.time + ")</strong>";
+            header.innerHTML = "<strong>Usterka #" + (idx + 1) + " (" + item.time + ")</strong>";
 
             var delBtn = document.createElement("button");
             delBtn.type = "button";
             delBtn.className = "btn btn-danger";
             delBtn.innerText = "Usuń";
-            delBtn.addEventListener("click", function() {
-                if (confirm("Usunąć tę usterkę?")) {
-                    issues.splice(index, 1);
-                    saveToStorage();
-                    renderIssues();
-                }
-            });
+            delBtn.onclick = function() { deleteIssue(item.id); };
             header.appendChild(delBtn);
-            card.appendChild(header);
 
             var meta = document.createElement("div");
             meta.className = "issue-meta";
             meta.innerText = "📍 " + item.location;
+
+            card.appendChild(header);
             card.appendChild(meta);
 
-            if (item.photos && item.photos.length > 0) {
+            var photosArr = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
+            if (photosArr.length > 0) {
                 var pGrid = document.createElement("div");
                 pGrid.className = "issue-photos-grid";
-                item.photos.forEach(function(src) {
+                photosArr.forEach(function(src) {
                     var im = document.createElement("img");
                     im.src = src;
                     pGrid.appendChild(im);
@@ -604,26 +663,57 @@
                 card.appendChild(pGrid);
             }
 
-            var pDesc = document.createElement("p");
-            pDesc.style.margin = "8px 0 0 0";
-            pDesc.innerText = item.description;
-            card.appendChild(pDesc);
+            var descP = document.createElement("p");
+            descP.style.margin = "8px 0 0 0";
+            descP.innerText = item.description;
+            card.appendChild(descP);
 
             listEl.appendChild(card);
         });
     }
 
+    // 6. Generowanie podglądu protokołu + kod QR mapy
     function extractCoords(item) {
-        if (item.lat && item.lon) return { lat: item.lat, lon: item.lon };
-        var match = (item.location || "").match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-        if (match) return { lat: match.item ? match.item(1) : match.slice(1, 2).shift(), lon: match.slice(2, 3).shift() };
-        return null;
+        if (item.coords && item.coords.indexOf(",") !== -1) {
+            return item.coords.replace(/\s+/g, "");
+        }
+        if (item.location) {
+            var m = item.location.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+            if (m) {
+                return m.at(1) + "," + m.at(2);
+            }
+        }
+        return "";
     }
 
-    function openReportView() {
+    function buildMapUrlForQr() {
+        var encodedItems = [];
+        issues.forEach(function(item, idx) {
+            var c = extractCoords(item);
+            if (c) {
+                var cleanDesc = (item.description || "").replace(/[|;~]/g, " ").substring(0, 40).trim();
+                encodedItems.push((idx + 1) + "~" + c + "~" + encodeURIComponent(cleanDesc));
+            }
+        });
+        if (encodedItems.length === 0) return "";
+        var baseUrl = window.location.origin + window.location.pathname;
+        return baseUrl + "?m=" + encodedItems.join(";");
+    }
+
+    function openProtocolPreview() {
         if (issues.length === 0) {
             alert("Dodaj przynajmniej jedną usterkę przed wygenerowaniem protokołu.");
             return;
+        }
+
+        saveToStorage();
+
+        var logoEl = document.getElementById("docLogoImg");
+        if (savedLogoBase64) {
+            logoEl.src = savedLogoBase64;
+            logoEl.style.display = "block";
+        } else {
+            logoEl.style.display = "none";
         }
 
         document.getElementById("p-taskName").innerText = document.getElementById("taskName").value || "—";
@@ -631,282 +721,279 @@
         document.getElementById("p-inspectDate").innerText = document.getElementById("inspectDate").value || "—";
         document.getElementById("p-inspector").innerText = document.getElementById("inspector").value || "—";
 
-        var logoImg = document.getElementById("docLogoImg");
-        if (savedLogoBase64) {
-            logoImg.src = savedLogoBase64;
-            logoImg.style.display = "block";
-        } else {
-            logoImg.style.display = "none";
-        }
-
-        var tbody = document.getElementById("p-issuesBody");
+        var tbody = document.getElementById("p-tableBody");
         tbody.innerHTML = "";
-        var mapPoints = [];
 
         issues.forEach(function(item, idx) {
-            var num = idx + 1;
-            var coords = extractCoords(item);
-            if (coords) {
-                var shortDesc = (item.description || "").substring(0, 45).replace(/[|;~]/g, " ");
-                mapPoints.push(num + "~" + coords.lat + "~" + coords.lon + "~" + shortDesc);
-            }
-
             var tr = document.createElement("tr");
 
-            var tdNum = document.createElement("td");
-            tdNum.style.textAlign = "center";
-            tdNum.innerHTML = "<strong>" + num + "</strong>";
+            var tdNr = document.createElement("td");
+            tdNr.className = "col-nr";
+            tdNr.innerText = (idx + 1);
 
             var tdDesc = document.createElement("td");
+            tdDesc.className = "col-desc";
             tdDesc.innerText = item.description;
 
             var tdPhotos = document.createElement("td");
-            if (item.photos && item.photos.length > 0) {
-                var pWrap = document.createElement("div");
-                pWrap.className = "doc-table-photos";
-                item.photos.forEach(function(src) {
+            tdPhotos.className = "col-photos";
+            var photosArr = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
+            if (photosArr.length > 0) {
+                var grid = document.createElement("div");
+                grid.className = "doc-photo-grid";
+                photosArr.forEach(function(src) {
                     var im = document.createElement("img");
                     im.src = src;
-                    pWrap.appendChild(im);
+                    grid.appendChild(im);
                 });
-                tdPhotos.appendChild(pWrap);
+                tdPhotos.appendChild(grid);
             } else {
                 tdPhotos.innerText = "—";
             }
 
             var tdLoc = document.createElement("td");
+            tdLoc.className = "col-loc";
             tdLoc.innerText = item.location;
 
-            tr.appendChild(tdNum);
+            tr.appendChild(tdNr);
             tr.appendChild(tdDesc);
             tr.appendChild(tdPhotos);
             tr.appendChild(tdLoc);
             tbody.appendChild(tr);
         });
 
-        var qrBox = document.getElementById("qrContainer");
-        if (mapPoints.length > 0) {
-            var baseUrl = window.location.href.split("?").shift().split("#").shift();
-            var mapUrl = baseUrl + "?m=" + encodeURIComponent(mapPoints.join(";"));
-            currentQrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=2&data=" + encodeURIComponent(mapUrl);
-            qrBox.innerHTML = "<img src='" + currentQrUrl + "' crossorigin='anonymous' alt='Kod QR mapy'>" +
-                "<div class='qr-caption'><strong>Mapa usterek (QR)</strong><br>Zeskanuj telefonem, aby zobaczyć wszystkie punkty (1–" + issues.length + ") i nawigować w Google Maps.</div>";
+        // Kod QR pod tabelą po lewej stronie
+        var qrBox = document.getElementById("qrSection");
+        var mapUrl = buildMapUrlForQr();
+        if (mapUrl) {
+            var qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=2&data=" + encodeURIComponent(mapUrl);
+            qrBox.innerHTML = "<img src='" + qrApiUrl + "' crossorigin='anonymous' alt='Kod QR mapy'>" +
+                "<div class='qr-caption'><strong>Mapa lokalizacji usterek</strong><br>" +
+                "Zeskanuj kod QR telefonem, aby otworzyć mapę z pinezkami (1–" + issues.length + ") i nawigacją Google Maps.</div>";
         } else {
-            currentQrUrl = "";
-            qrBox.innerHTML = "<div class='qr-caption'>Brak współrzędnych GPS – kod QR mapy nie został wygenerowany.</div>";
+            qrBox.innerHTML = "<div class='qr-caption'>Brak współrzędnych GPS przy usterkach – kod QR mapy nie został wygenerowany.</div>";
         }
 
-        saveToStorage();
-        document.getElementById("app-view").style.display = "none";
-        document.getElementById("report-view").style.display = "block";
+        document.getElementById("form-view").style.display = "none";
+        document.getElementById("preview-overlay").style.display = "block";
         window.scrollTo(0, 0);
     }
 
-    function closeReportView() {
-        document.getElementById("report-view").style.display = "none";
-        document.getElementById("app-view").style.display = "block";
-    }
-
+    // 7. Eksport PDF z numeracją "strona 1/x" w prawym dolnym rogu
     function downloadPdfFile() {
-        var element = document.getElementById("pdf-sheet");
-        var contract = (document.getElementById("contractNo").value || "Protokol").replace(/[^a-zA-Z0-9_-]/g, "_");
+        var element = document.getElementById("document-sheet");
+        if (typeof html2pdf === "undefined") {
+            window.print();
+            return;
+        }
+
         var opt = {
-            margin: [10, 10, 14, 10],
-            filename: "Protokol_gwarancyjny_" + contract + ".pdf",
-            image: { type: "jpeg", quality: 0.85 },
+            margin: [10, 8, 15, 8],
+            filename: "Protokol_przegladu_gwarancyjnego.pdf",
+            image: { type: "jpeg", quality: 0.92 },
             html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-            pagebreak: { mode: ["avoid-all", "css"] }
+            pagebreak: { mode: ["avoid-all", "css", "legacy"] }
         };
 
         html2pdf().set(opt).from(element).toPdf().get("pdf").then(function(pdf) {
             var totalPages = pdf.internal.getNumberOfPages();
-            var pageWidth = pdf.internal.pageSize.getWidth();
-            var pageHeight = pdf.internal.pageSize.getHeight();
-            pdf.setFontSize(9);
-            pdf.setTextColor(60, 60, 60);
-            for (var p = 1; p <= totalPages; p++) {
-                pdf.setPage(p);
-                pdf.text("strona " + p + "/" + totalPages, pageWidth - 10, pageHeight - 6, { align: "right" });
+            for (var i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(9);
+                pdf.setTextColor(60, 60, 60);
+                var pageW = pdf.internal.pageSize.getWidth();
+                var pageH = pdf.internal.pageSize.getHeight();
+                pdf.text("strona " + i + "/" + totalPages, pageW - 10, pageH - 6, { align: "right" });
             }
         }).save();
     }
 
+    // 8. Eksport DOCX z numeracją "strona 1/x" w stopce po prawej
     function downloadDocxFile() {
-        var taskName = escapeHtml(document.getElementById("taskName").value || "—");
-        var contractNo = escapeHtml(document.getElementById("contractNo").value || "—");
-        var inspectDate = escapeHtml(document.getElementById("inspectDate").value || "—");
-        var inspector = escapeHtml(document.getElementById("inspector").value || "—");
+        var taskName = document.getElementById("p-taskName").innerText;
+        var contractNo = document.getElementById("p-contractNo").innerText;
+        var inspectDate = document.getElementById("p-inspectDate").innerText;
+        var inspector = document.getElementById("p-inspector").innerText;
 
         var rowsHtml = "";
         issues.forEach(function(item, idx) {
-            var photosHtml = "";
-            if (item.photos && item.photos.length > 0) {
-                item.photos.forEach(function(src) {
-                    photosHtml += "<p style='margin:2pt 0;'><img src='" + src + "' width='170' style='max-width:170px; height:auto;'></p>";
-                });
-            } else {
-                photosHtml = "—";
-            }
+            var photosArr = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
+            var imgsHtml = "";
+            photosArr.forEach(function(src) {
+                imgsHtml += "<img src='" + src + "' width='140' style='margin:2px; border:1px solid #888;' /> ";
+            });
             rowsHtml += "<tr>" +
-                "<td style='border:1px solid #000; padding:5pt; text-align:center; vertical-align:top;'><b>" + (idx + 1) + "</b></td>" +
-                "<td style='border:1px solid #000; padding:5pt; vertical-align:top;'>" + escapeHtml(item.description) + "</td>" +
-                "<td style='border:1px solid #000; padding:5pt; vertical-align:top;'>" + photosHtml + "</td>" +
-                "<td style='border:1px solid #000; padding:5pt; vertical-align:top;'>" + escapeHtml(item.location) + "</td>" +
+                "<td style='border:1px solid #000; padding:6px; text-align:center; font-weight:bold;'>" + (idx + 1) + "</td>" +
+                "<td style='border:1px solid #000; padding:6px;'>" + item.description + "</td>" +
+                "<td style='border:1px solid #000; padding:6px;'>" + (imgsHtml || "—") + "</td>" +
+                "<td style='border:1px solid #000; padding:6px; font-size:9pt;'>" + item.location + "</td>" +
                 "</tr>";
         });
 
-        var logoHtml = savedLogoBase64 ? "<img src='" + savedLogoBase64 + "' height='50' style='height:50px; width:auto;'>" : "";
-        var qrHtml = currentQrUrl
-            ? "<img src='" + currentQrUrl + "' width='100' height='100'><br><span style='font-size:8pt;'>Zeskanuj kod QR, aby otworzyć mapę usterek</span>"
-            : "<span style='font-size:8pt;'>Brak danych GPS dla kodu QR</span>";
+        var logoHtml = savedLogoBase64 ? "<img src='" + savedLogoBase64 + "' height='55' />" : "";
+        var mapUrl = buildMapUrlForQr();
+        var qrHtml = "";
+        if (mapUrl) {
+            var qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=2&data=" + encodeURIComponent(mapUrl);
+            qrHtml = "<img src='" + qrApiUrl + "' width='90' height='90' /><br/><span style='font-size:8pt;'>Zeskanuj kod QR, aby otworzyć mapę usterek</span>";
+        }
 
-        var wordHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>" +
-            "<head><meta charset='utf-8'><title>Protokół</title>" +
-            "<style>" +
-            "@page Section1 { size:595.3pt 841.9pt; margin:36pt 36pt 42pt 36pt; mso-footer:f1; }" +
-            "div.Section1 { page:Section1; font-family:Arial, sans-serif; }" +
-            "p.MsoFooter { margin:0; text-align:right; font-size:9pt; color:#333; }" +
+        var docHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>" +
+            "<head><meta charset='utf-8'><style>" +
+            "@page Section1 { size: 595.3pt 841.9pt; margin: 42.5pt 42.5pt 42.5pt 42.5pt; mso-footer: f1; }" +
+            "div.Section1 { page: Section1; font-family: Arial, sans-serif; font-size: 10pt; }" +
+            "p.MsoFooter { margin: 0; text-align: right; font-size: 9pt; font-family: Arial, sans-serif; }" +
             "</style></head><body><div class='Section1'>" +
-            "<table style='width:100%; border-bottom:2px solid #000; margin-bottom:10pt;'><tr>" +
-            "<td style='width:130pt; vertical-align:middle;'>" + logoHtml + "</td>" +
-            "<td style='vertical-align:middle; font-weight:bold; font-size:11pt;'>Generalna Dyrekcja Dróg Krajowych i Autostrad<br>Oddział w Białymstoku</td>" +
+            "<table style='width:100%; border-bottom:2px solid #000; margin-bottom:12px;'><tr>" +
+            "<td style='width:160px; vertical-align:middle;'>" + logoHtml + "</td>" +
+            "<td style='font-weight:bold; font-size:10.5pt; vertical-align:middle;'>Generalna Dyrekcja<br>Dróg Krajowych i Autostrad<br>Oddział w Białymstoku</td>" +
             "</tr></table>" +
-            "<h2 style='text-align:center; text-transform:uppercase; font-size:14pt;'>Protokół z przeglądu gwarancyjnego</h2>" +
-            "<div style='border:1.5px solid #000; padding:8pt; margin-bottom:8pt; font-size:10pt;'>" +
-            "<div><b>Nazwa zadania:</b> " + taskName + "</div>" +
-            "<div><b>Numer umowy:</b> " + contractNo + "</div>" +
-            "<div><b>Data kontroli:</b> " + inspectDate + "</div>" +
+            "<h2 style='text-align:center; text-transform:uppercase;'>Protokół z przeglądu gwarancyjnego</h2>" +
+            "<div style='border:1.5px solid #000; padding:10px; margin-bottom:8px;'>" +
+            "<div><strong>Nazwa zadania:</strong> " + taskName + "</div>" +
+            "<div><strong>Numer umowy:</strong> " + contractNo + "</div>" +
+            "<div><strong>Data kontroli:</strong> " + inspectDate + "</div>" +
             "</div>" +
-            "<p style='font-size:10pt; margin-bottom:12pt;'><b>Kontrolujący:</b> " + inspector + "</p>" +
-            "<table style='width:100%; border-collapse:collapse; font-size:9.5pt; margin-bottom:16pt;'>" +
-            "<thead><tr style='background:#e5e7eb;'>" +
-            "<th style='border:1px solid #000; padding:5pt; width:10%;'>Nr usterki</th>" +
-            "<th style='border:1px solid #000; padding:5pt; width:30%;'>Opis usterki</th>" +
-            "<th style='border:1px solid #000; padding:5pt; width:36%;'>Zdjęcia</th>" +
-            "<th style='border:1px solid #000; padding:5pt; width:24%;'>Lokalizacja</th>" +
+            "<p><strong>Kontrolujący:</strong> " + inspector + "</p>" +
+            "<table style='width:100%; border-collapse:collapse; margin-bottom:20px;'>" +
+            "<thead><tr style='background:#f0f0f0;'>" +
+            "<th style='border:1px solid #000; padding:6px; width:8%;'>Nr usterki</th>" +
+            "<th style='border:1px solid #000; padding:6px; width:32%;'>Opis usterki</th>" +
+            "<th style='border:1px solid #000; padding:6px; width:38%;'>Zdjęcia</th>" +
+            "<th style='border:1px solid #000; padding:6px; width:22%;'>Lokalizacja</th>" +
             "</tr></thead><tbody>" + rowsHtml + "</tbody></table>" +
-            "<table style='width:100%; margin-top:20pt;'><tr>" +
+            "<table style='width:100%; margin-top:25px;'><tr>" +
             "<td style='width:55%; vertical-align:bottom;'>" + qrHtml + "</td>" +
-            "<td style='width:45%; vertical-align:bottom; text-align:center;'>" +
-            "<div style='border-top:1px solid #000; padding-top:4pt; font-size:9.5pt;'>Podpis przedstawiciela komisji</div>" +
-            "</td></tr></table>" +
-            "<div style='mso-element:footer' id='f1'>" +
-            "<p class='MsoFooter'>strona <span style='mso-field-code:"PAGE"'>1</span>/<span style='mso-field-code:"NUMPAGES"'>1</span></p>" +
-            "</div></div></body></html>";
+            "<td style='width:45%; text-align:center; vertical-align:bottom; padding-top:40px;'>......................................................<br/>Podpis przedstawiciela komisji</td>" +
+            "</tr></table>" +
+            "<div style='mso-element:footer' id='f1'><p class='MsoFooter'>strona " +
+            "<span style='mso-field-code:" PAGE "'>1</span>/<span style='mso-field-code:" NUMPAGES "'>1</span>" +
+            "</p></div></div></body></html>";
 
-        var blob = new Blob(["﻿", wordHtml], { type: "application/msword" });
+        var blob = new Blob(["﻿", docHtml], { type: "application/msword" });
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");
-        var contract = (document.getElementById("contractNo").value || "Protokol").replace(/[^a-zA-Z0-9_-]/g, "_");
         a.href = url;
-        a.download = "Protokol_gwarancyjny_" + contract + ".doc";
+        a.download = "Protokol_przegladu_gwarancyjnego.doc";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
 
-    function escapeHtml(str) {
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
+    // 9. Interaktywna mapa po zeskanowaniu QR
+    function openInteractiveMap(encodedData) {
+        document.getElementById("form-view").style.display = "none";
+        document.getElementById("map-mode").style.display = "flex";
 
-    function checkMapQueryParam() {
-        var params = new URLSearchParams(window.location.search);
-        var m = params.get("m");
-        if (!m) return;
-
-        document.getElementById("app-view").style.display = "none";
-        document.getElementById("map-view").style.display = "flex";
-
-        var map = L.map("leaflet-map").setView([53.1325, 23.1688], 13);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution: "&copy; OpenStreetMap"
-        }).addTo(map);
-
-        var bounds = [];
-        var rawItems = m.split(";");
-        rawItems.forEach(function(entry) {
-            var parts = entry.split("~");
-            if (parts.length >= 3) {
-                var num = parts.shift();
-                var lat = parseFloat(parts.shift());
-                var lon = parseFloat(parts.shift());
-                var desc = parts.join("~") || "Usterka nr " + num;
+        var points = [];
+        var rawParts = encodedData.split(";");
+        rawParts.forEach(function(part) {
+            var segs = part.split("~");
+            if (segs.length >= 2) {
+                var num = segs.at(0);
+                var coordStr = segs.at(1) || "";
+                var desc = segs.at(2) ? decodeURIComponent(segs.at(2)) : "";
+                var latLon = coordStr.split(",");
+                var lat = parseFloat(latLon.at(0));
+                var lon = parseFloat(latLon.at(1));
                 if (!isNaN(lat) && !isNaN(lon)) {
-                    bounds.push([lat, lon]);
-                    var icon = L.divIcon({
-                        className: "",
-                        html: "<div class='custom-pin'>" + escapeHtml(num) + "</div>",
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
-                    });
-                    var navUrl = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lon;
-                    var popupHtml = "<strong>Usterka nr " + escapeHtml(num) + "</strong><br>" +
-                        escapeHtml(desc) + "<br>" +
-                        "<a class='gmaps-nav-btn' href='" + navUrl + "' target='_blank'>🧭 Nawiguj w Google Maps</a>";
-                    L.marker([lat, lon], { icon: icon }).addTo(map).bindPopup(popupHtml);
+                    points.push({ num: num, lat: lat, lon: lon, desc: desc });
                 }
             }
         });
 
-        if (bounds.length > 0) {
-            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
+        if (points.length === 0) {
+            document.getElementById("mapSubtitle").innerText = "Brak poprawnych współrzędnych w kodzie QR.";
+            return;
         }
+
+        var firstPt = points.at(0);
+        leafletMapInstance = L.map("leafletMap").setView([firstPt.lat, firstPt.lon], 15);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "© OpenStreetMap"
+        }).addTo(leafletMapInstance);
+
+        var markersLatLng = [];
+        points.forEach(function(pt) {
+            markersLatLng.push([pt.lat, pt.lon]);
+            var icon = L.divIcon({
+                className: "",
+                html: "<div class='pin-badge'>" + pt.num + "</div>",
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            var gmapsLink = "https://www.google.com/maps/dir/?api=1&destination=" + pt.lat + "," + pt.lon;
+            var popupHtml = "<strong>Usterka nr " + pt.num + "</strong><br>" +
+                (pt.desc ? ("<span>" + pt.desc + "</span><br>") : "") +
+                "<small style='color:#555;'>GPS: " + pt.lat + ", " + pt.lon + "</small><br>" +
+                "<a class='nav-gmaps-btn' href='" + gmapsLink + "' target='_blank'>🧭 Nawiguj w Google Maps</a>";
+
+            L.marker([pt.lat, pt.lon], { icon: icon }).addTo(leafletMapInstance).bindPopup(popupHtml);
+        });
+
+        leafletBounds = L.latLngBounds(markersLatLng);
+        leafletMapInstance.fitBounds(leafletBounds, { padding: [45, 45], maxZoom: 16 });
+
+        document.getElementById("btnFitMap").addEventListener("click", function() {
+            if (leafletMapInstance && leafletBounds) {
+                leafletMapInstance.fitBounds(leafletBounds, { padding: [45, 45], maxZoom: 16 });
+            }
+        });
     }
 
+    // 10. Pamięć lokalna przeglądarki
     function saveToStorage() {
         var state = {
             taskName: document.getElementById("taskName").value,
             contractNo: document.getElementById("contractNo").value,
             inspector: document.getElementById("inspector").value,
-            logo: savedLogoBase64,
             issues: issues
         };
         try {
-            localStorage.setItem("protokol_gwarancyjny_v15", JSON.stringify(state));
+            localStorage.setItem("protokol_gwarancyjny_v16", JSON.stringify(state));
         } catch (e) {}
     }
 
     function loadFromStorage() {
-        var raw = localStorage.getItem("protokol_gwarancyjny_v15") || localStorage.getItem("protokol_terenowy_v2");
-        if (!raw) return;
         try {
-            var state = JSON.parse(raw);
-            document.getElementById("taskName").value = state.taskName || "";
-            document.getElementById("contractNo").value = state.contractNo || "";
-            document.getElementById("inspector").value = state.inspector || "";
-            savedLogoBase64 = state.logo || "";
-            renderLogoPreview();
-
-            var loaded = state.issues || [];
-            issues = loaded.map(function(it) {
-                var pList = Array.isArray(it.photos) ? it.photos : (it.photo ? [it.photo] : []);
-                return {
-                    id: it.id || Date.now(),
-                    time: it.time || "",
-                    photos: pList,
-                    location: it.location || "Nie pobrano lokalizacji",
-                    lat: it.lat || "",
-                    lon: it.lon || "",
-                    description: it.description || ""
-                };
-            });
-            renderIssues();
+            var logo = localStorage.getItem("protokol_logo_v16") || localStorage.getItem("protokol_logo_v1");
+            if (logo) {
+                savedLogoBase64 = logo;
+                renderLogoPreview();
+            }
         } catch (e) {}
+
+        try {
+            var raw = localStorage.getItem("protokol_gwarancyjny_v16");
+            if (raw) {
+                var st = JSON.parse(raw);
+                document.getElementById("taskName").value = st.taskName || "";
+                document.getElementById("contractNo").value = st.contractNo || "";
+                document.getElementById("inspector").value = st.inspector || "";
+                if (Array.isArray(st.issues)) {
+                    issues = st.issues;
+                }
+                renderIssuesList();
+            }
+        } catch (e) {
+            localStorage.removeItem("protokol_gwarancyjny_v16");
+        }
     }
 
     function clearAll() {
-        if (confirm("Wyczyścić formularz i listę usterek? (Logo instytucji zostanie zachowane)")) {
+        if (confirm("Czy na pewno wyczyścić wszystkie usterki i zacząć nowy protokół?")) {
+            localStorage.removeItem("protokol_gwarancyjny_v16");
             issues = [];
             currentPhotos = [];
-            renderCurrentPhotos();
+            document.getElementById("preview-container").innerHTML = "";
+            document.getElementById("photoStatus").innerText = "";
             document.getElementById("taskName").value = "";
             document.getElementById("contractNo").value = "";
-            document.getElementById("issueDesc").value = "";
-            saveToStorage();
-            renderIssues();
+            renderIssuesList();
         }
     }
 </script>
